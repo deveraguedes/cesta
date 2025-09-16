@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($success) {
             // Session variables are already set inside the login() method
-            header('Location: ../test.php'); // ✅ Redirect on success
+            header('Location: ../../beneficiario.php'); // ✅ Redirect on success
             exit;
         } else {
             header('Location: ../login.php?response=5'); // ❌ Incorrect credentials
