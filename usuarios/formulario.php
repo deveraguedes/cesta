@@ -28,7 +28,7 @@ foreach ($unidades as $row) {
 
 <body>
 
-  <div class="container center-vertical" style="width: 950px; padding-top: 10px; padding-bottom: 10px;">
+  <div class="container center-vertical" style="width: 950px; padding-top: 60px; padding-bottom: 10px;">
     <div class="login-card" style="padding: 30px; width: 950px; padding-bottom: 30px;">
       <h2 class="text-center title">Cadastro de Usuário</h2>
       <p class="text-muted text-center">Preencha os dados abaixo para solicitar acesso ao sistema.</p>
