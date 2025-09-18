@@ -38,13 +38,58 @@ body {
 }
 
 .color {
-  background-color: var(--wine-base);
+  background-color: var(--wine-bright);
   border: none;
   transition: background-color 0.3s ease;
 }
 
 .color:hover {
+  background-color: var(--wine-base);
+}
+
+.color:active {
   background-color: var(--wine-dark);
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+/* pagination with our wine “color” theme */
+.pagination.color .page-link {
+  color: #6c757d                !important;
+  transition: background-color 0.3s ease !important;
+}
+
+/* hover state */
+.pagination.color .page-link:hover {
+  background-color: var(--wine-bright) !important;
+  color: #fff                   !important;
+}
+
+/* active page */
+.pagination.color .page-item.active .page-link {
+  background-color: var(--wine-base) !important;
+  color: #fff                     !important;
+}
+
+/* disabled prev/next */
+.pagination.color .page-item.disabled .page-link {
+  background-color: #e9ecef      !important;
+  color: #6c757d                !important;
+}
+
+
+/* buttons and title color code */
+
+.tableColorHeader {
+  color: #ffffff;
+  background-color: var(--wine-bright);
+  transition: background-color 0.3s ease;
+}
+
+.tableColor {
+  background-color: #f8f9fa;
+  transition: background-color 0.3s ease;
+  border: var(--wine-dark);
 }
 
 /* Alerta modernizados */

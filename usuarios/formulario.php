@@ -1,7 +1,23 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
+
+// redireciona se não estiver logado
+if (empty($_SESSION['user_id'])) {
+  header('Location: login.php');
+  exit;
+}
+
+// renova sessão
+require_once '../classes/login.class.php';
+$loginCtrl = new LoginUsuario();
+$loginCtrl->refreshSessionTime();
+
 ini_set("display_errors", 1);
 include_once('../classes/unidade.class.php');
 include_once('../classes/usuarios.class.php');
+
 
 $u = new Unidade();
 $stmt = $u->exibirUnidade();
@@ -11,6 +27,8 @@ $unidadeMap = [];
 foreach ($unidades as $row) {
   $unidadeMap[(int)$row['cod_unidade']] = $row['vch_unidade'];
 }
+
+$currentLevel = $_SESSION['int_level'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -27,6 +45,15 @@ foreach ($unidades as $row) {
 </head>
 
 <body>
+  <script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    crossorigin="anonymous">
+  </script>
+
+  <script
+    src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+    crossorigin="anonymous">
+  </script>
 
   <div class="container center-vertical" style="width: 950px; padding-top: 60px; padding-bottom: 10px;">
     <div class="login-card" style="padding: 30px; width: 950px; padding-bottom: 30px;">
@@ -113,70 +140,338 @@ foreach ($unidades as $row) {
             </div>";
         }
       } ?>
-      <div class="text-center" style="width: 100%;">
-        &copy; Prefeitura Municipal de Camaçari
+    </div>
+  </div>
+
+  <div class="container center-vertical" style="width: 1100px; padding-top: 20px; padding-bottom: 10px;">
+    <div class="login-card" style="padding: 30px; width: 1100px; padding-bottom: 30px;">
+      <div class="row" style="margin-right: 0px; margin-left: 0px; padding-bottom: 20px;">
+        <div class="col-md-6 text-right" style="padding-bottom: 10px;">
+          <h4 class="title">Usuários no sistema</h4>
+        </div>
+        <div class="col-md-6">
+          <select name="cod_unidade" id="filtroUnidade" class="combobox form-control" required>
+            <option value="">Selecione ou digite</option>
+            <?php foreach ($unidades as $row_unidade): ?>
+              <option value="<?php echo $row_unidade['cod_unidade']; ?>">
+                <?php echo $row_unidade['vch_unidade']; ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <table id="tabelaUsuarios" class="table table-bordered tableColor">
+          <thead class="tableColorHeader">
+            <tr>
+              <th style="width: 10%;">Cadastro</th>
+              <th style="width: 30%;">Nome</th>
+              <th style="width: 15%;">Login</th>
+              <th style="width: 35%;">Unidade</th>
+              <th style="width: 10%; text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- JavaScript preencherá aqui -->
+          </tbody>
+        </table>
+        <div class="col-md-12 text-center">
+          <nav aria-label="Navegação de página">
+            <ul class="pagination justify-content-center color" id="pagerUsuarios"></ul>
+          </nav>
+        </div>
+        <div class="text-center" style="width: 100%;">
+          &copy; Prefeitura Municipal de Camaçari
+        </div>
       </div>
     </div>
   </div>
 
-  <!--<div>
-    <h4 class="title">Usuários pendentes de validação</h4>
-  <table class="table table-striped table-bordered">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Unidade</th>
-        <th>Login</th>
-        <th>Senha</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php
-      /*$usuario = new Usuarios();
-      $consulta = $usuario->dadosTemporarios();
-      while ($row = $consulta->fetch(PDO::FETCH_ASSOC)) {
-        echo "<tr>
-          <td>{$row['vch_nome']}</td>
-          <td>{$row['vch_unidade']}</td>
-          <td>{$row['vch_login']}</td>
-          <td>{$row['vch_senha']}</td>
-          <td>
-            <a href='../forms/alterar_usuario.php?cod_usuario={$row['cod_usuario']}' data-toggle='modal' data-target='#myModal'>
-              <span class='glyphicon glyphicon-pencil'></span>
-            </a>
-            <a href='forms/excluir_usuario.php?cod_usuario={$row['cod_usuario']}' data-toggle='modal' data-target='#myModal'>
-              <span class='glyphicon glyphicon-trash'></span>
-            </a>
-          </td>
-        </tr>";
-      }*/
-      ?>
-    </tbody>
-  </table>
-</div>-->
+  <!-- expose current user level -->
+  <script>
+    const currentUserLevel = <?= json_encode((int)($_SESSION['int_level'] ?? 0), JSON_UNESCAPED_UNICODE) ?>;
+  </script>
+
+  <!-- editar-usuario Modal -->
+  <div class="modal fade" id="editUsuarioModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="editUsuarioForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar Usuário</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editCodUsuario" name="cod_usuario">
+
+            <div class="form-group">
+              <label for="editNome">Nome</label>
+              <input type="text" id="editNome" name="vch_nome" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editLogin">Login</label>
+              <input type="text" id="editLogin" name="vch_login" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editUnidade">Unidade</label>
+              <select id="editUnidade" name="cod_unidade" class="form-control" required>
+                <option value="">Selecione</option>
+                <?php foreach ($unidades as $u): ?>
+                  <option value="<?= $u['cod_unidade'] ?>">
+                    <?= htmlspecialchars($u['vch_unidade']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editSenha">Nova Senha</label>
+              <input type="password" id="editSenha" name="vch_senha"
+                class="form-control" placeholder="Deixe vazio para manter a atual">
+            </div>
+
+            <div class="form-group">
+              <label for="editSenhaConfirm">Confirmar Senha</label>
+              <input type="password" id="editSenhaConfirm"
+                class="form-control" placeholder="Repita a nova senha">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary color">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    const unidadeMap = <?= json_encode($unidadeMap, JSON_UNESCAPED_UNICODE) ?>;
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const filtro = document.getElementById('filtroUnidade');
+      const tbodyEl = document.querySelector('#tabelaUsuarios tbody');
+      const pagerEl = document.getElementById('pagerUsuarios');
+      const perPage = 6;
+      let curPage = 1;
+
+      if (!filtro || !tbodyEl || !pagerEl) return;
+
+      filtro.addEventListener('change', () => {
+        curPage = 1;
+        carregar(curPage);
+      });
+
+      carregar(curPage);
+
+      async function carregar(page) {
+        try {
+          const un = filtro.value || 0;
+          const resp = await fetch(
+            `processamento/listar_usuarios.php?unidade=${un}&page=${page}&per_page=${perPage}`
+          );
+          let text = await resp.text();
+          text = text.replace(/^[\s\xEF\xBB\xBF]+/, '');
+          const json = JSON.parse(text);
+
+          tbodyEl.innerHTML = '';
+          if (!json.success) {
+            tbodyEl.innerHTML = `<tr><td colspan="5">Erro: ${json.error||'—'}</td></tr>`;
+            return;
+          }
+          if (json.data.length === 0) {
+            tbodyEl.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
+          } else {
+            json.data.forEach(u => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+            <td>${formatDate(u.data_cadastro)}</td>
+            <td>${u.vch_nome}</td>
+            <td>${u.vch_login}</td>
+            <td>${unidadeMap[u.cod_unidade]||u.cod_unidade}</td>
+            <td></td>
+          `;
+              const cell = tr.querySelector('td:last-child');
+
+              // Editar (só admin)
+              if (currentUserLevel === 1) {
+                const btnE = document.createElement('button');
+                btnE.className = 'btn btn-sm btn-outline-secondary mr-2';
+                btnE.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.854a.5.5 0 0 1 .708 0l1.292 1.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 3 10.707V13h2.293L13.5 4.793l-2.293-2.293z"/></svg>';
+                btnE.onclick = () => openEditModal(u);
+                cell.appendChild(btnE);
+              }
+
+              // Deletar (todos)
+              const btnD = document.createElement('button');
+              btnD.className = 'btn btn-sm btn-outline-danger';
+              btnD.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 5h4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5v-7z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4H2.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3H4h8h1.5a.5.5 0 0 0 0-1H12V1a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v1H2.5a.5.5 0 0 0 0 1z"/></svg>';
+              btnD.onclick = () => deletarUsuario(u.cod_usuario);
+              cell.appendChild(btnD);
+
+              tbodyEl.appendChild(tr);
+            });
+          }
+
+          renderPager(json.total, json.page, json.per_page);
+        } catch (err) {
+          console.error(err);
+          tbodyEl.innerHTML = '<tr><td colspan="5">Erro ao carregar tabela.</td></tr>';
+        }
+      }
+
+      function openEditModal(u) {
+        // grab the modal once
+        const $modal = $('#editUsuarioModal');
+        if (!$modal.length) {
+          console.error('Modal element not found');
+          return;
+        }
+
+        // fill fields via jQuery
+        $modal.find('#editCodUsuario').val(u.cod_usuario);
+        $modal.find('#editNome').val(u.vch_nome);
+        $modal.find('#editLogin').val(u.vch_login);
+        $modal.find('#editUnidade').val(u.cod_unidade);
+        // clear password inputs
+        $modal.find('#editSenha, #editSenhaConfirm').val('');
+
+        // show it
+        $modal.modal('show');
+      }
+
+      const editForm = document.getElementById('editUsuarioForm');
+      if (editForm) {
+        editForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          const senha = document.getElementById('editSenha').value;
+          const confirma = document.getElementById('editSenhaConfirm').value;
+          if (senha && senha !== confirma) {
+            return alert('As senhas não coincidem.');
+          }
+          const data = new FormData(editForm);
+          if (!senha) data.delete('vch_senha');
+          try {
+            const res = await fetch('processamento/editar_usuario.php', {
+              method: 'POST',
+              body: data
+            });
+            const json = await res.json();
+            if (json.success) {
+              $('#editUsuarioModal').modal('hide');
+              carregar(curPage);
+            } else {
+              alert('Erro ao salvar: ' + (json.error || 'desconhecido'));
+            }
+          } catch (err) {
+            console.error(err);
+            alert('Erro na requisição.');
+          }
+        });
+      }
+
+      async function deletarUsuario(id) {
+        if (!confirm('Deseja realmente excluir este usuário?')) return;
+        try {
+          const res = await fetch('processamento/deletar_usuario.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              cod: id
+            })
+          });
+          const text = await res.text();
+
+          console.log('RAW RESPONSE:', text); // veja todo o HTML/erro aqui
+          let json;
+          try {
+            json = JSON.parse(text);
+          } catch (e) {
+            return alert('Resposta inválida do servidor:\n' + text);
+          }
+
+          if (json.success) {
+            carregar(curPage);
+          } else {
+            alert('Erro ao excluir: ' + (json.error || 'desconhecido'));
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Erro na requisição: ' + err.message);
+        }
+      }
+
+      function renderPager(totalItems, page, perPage) {
+        const totalPages = Math.ceil(totalItems / perPage);
+        pagerEl.innerHTML = '';
+        if (totalPages < 2) return;
+        // Previous
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${page===1?'disabled':''}`;
+        prevLi.innerHTML = `<a class="page-link color" href="#">Anterior</a>`;
+        prevLi.onclick = e => {
+          e.preventDefault();
+          if (page > 1) carregar(page - 1);
+        };
+        pagerEl.appendChild(prevLi);
+        // Pages
+        for (let p = 1; p <= totalPages; p++) {
+          const li = document.createElement('li');
+          li.className = `page-item ${p===page?'active':''}`;
+          li.innerHTML = `<a class="page-link color" href="#">${p}</a>`;
+          li.onclick = e => {
+            e.preventDefault();
+            if (p !== page) carregar(p);
+          };
+          pagerEl.appendChild(li);
+        }
+        // Next
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${page===totalPages?'disabled':''}`;
+        nextLi.innerHTML = `<a class="page-link color" href="#">Próxima</a>`;
+        nextLi.onclick = e => {
+          e.preventDefault();
+          if (page < totalPages) carregar(page + 1);
+        };
+        pagerEl.appendChild(nextLi);
+      }
+
+      function formatDate(str) {
+        str = str.trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+          const d = new Date(str);
+          return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
+        }
+        const parts = str.split(/[-\/]/);
+        if (parts.length === 3) {
+          let dd, mm, yy;
+          if (parts[0].length === 4) {
+            yy = parts[0];
+            mm = parts[1];
+            dd = parts[2];
+          } else {
+            dd = parts[0];
+            mm = parts[1];
+            yy = parts[2];
+          }
+          const d = new Date(`${yy}-${mm}-${dd}`);
+          return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
+        }
+        const d = new Date(str);
+        return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
+      }
+    });
+  </script>
+
+
 </body>
-
-<script>
-  function mascara(i) {
-    let v = i.value;
-
-    // Remove tudo que não seja número, ponto ou traço
-    v = v.replace(/[^0-9.-]/g, "");
-
-    // Remove múltiplos pontos ou traços consecutivos
-    v = v.replace(/(\.{2,})/g, ".");
-    v = v.replace(/(-{2,})/g, "-");
-
-    // Remove ponto ou traço fora das posições corretas
-    v = v.replace(/^\.|^-/g, ""); // não começa com ponto ou traço
-    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-    v = v.replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
-    v = v.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
-
-    i.value = v;
-  }
-</script>
-
 
 </html>
