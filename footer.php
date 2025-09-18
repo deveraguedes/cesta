@@ -1,0 +1,1 @@
+<footer> &copy; Prefeitura Municipal de Camaçari <!--<img src="../images/lockup_cloud_sm_h.png"  alt="" width="200" class="img-responsive" style="float:right;"/>--> </footer>
