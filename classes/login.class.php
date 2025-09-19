@@ -78,7 +78,7 @@ class LoginUsuario {
         return !empty($_SESSION['user_id']);
     }
 
-    public function logout(string $redirect = '../beneficiario.php'): void {
+    public function logout(string $redirect = 'index.php'): void {
         session_unset();
         session_destroy();
         header("Location: $redirect");
