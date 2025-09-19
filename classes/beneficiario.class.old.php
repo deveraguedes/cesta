@@ -4,8 +4,7 @@ include_once "classes/categoria.class.php";
 
 class Beneficiario
 {
-    private $categoria;
-    private $id_categoria;
+   
     public $cod_beneficiario;
     public $nis;
     public $cpf;
@@ -26,9 +25,6 @@ class Beneficiario
     public $telefone;
     public $situacao;
 
-
-
-    
     public function setCod_beneficiario($cod_beneficiario)
     {
         $this->cod_beneficiario = $cod_beneficiario;
@@ -186,18 +182,6 @@ class Beneficiario
     {
         return $this->cod_tipo;
     }
-    public function setCategoria(Categoria $categoria)
-    {
-        $this->categoria = $categoria;
-        $this->id_categoria = $categoria->getId();
-    }
-
-    public function getCategoria()
-    {
-        return $this->categoria;
-    }
-
-    
 
     public function inserirBeneficiario()
     {
@@ -206,25 +190,15 @@ class Beneficiario
 
             $this->dt_cadastro = date("d/m/Y");
 
-           $id_categoria = null;
-
-if ($_SESSION['int_nivel'] == 2 && !empty($_POST['categoria'])) {
-    $id_categoria = (int) $_POST['categoria'];
-}
-
-
-$consulta = $pdo->prepare("INSERT INTO beneficiario.beneficiario
-    (nis, cpf, nome, cod_bairro, localidade, cod_usuario, dt_cadastro, cod_unidade, 
-     cpf_responsavel, vch_responsavel, cod_tipo, cep, endereco, complemento, telefone, situacao, id_categoria) 
-VALUES 
-    (:nis, :cpf, :nome, :cod_bairro, :localidade, :cod_usuario, :dt_cadastro, :cod_unidade, 
-     :cpf_responsavel, :vch_responsavel, :cod_tipo, :cep, :endereco, :complemento, :telefone, :situacao, :id_categoria);");
+            $consulta = $pdo->prepare("INSERT into beneficiario.beneficiario( nis, cpf, nome, cod_bairro, localidade, cod_usuario, dt_cadastro, cod_unidade, 
+                                cpf_responsavel, vch_responsavel, cod_tipo, cep, endereco, complemento, telefone, situacao) 
+                                values ( :nis, :cpf, :nome, :cod_bairro, :localidade, :cod_usuario, 
+                                :dt_cadastro, :cod_unidade, :cpf_responsavel, :vch_responsavel, :cod_tipo, :cep, :endereco, :complemento, :telefone, :situacao) ;");
 
             if ($this->nis == "") {
                 $this->nis = null;
             }
             $consulta->bindParam(':nis', $this->nis);
-            $consulta->bindParam(':id_categoria', $this->id_categoria, PDO::PARAM_INT);
 
             if ($this->cpf == "") {
                 $this->cpf = null;
@@ -244,10 +218,7 @@ VALUES
             $consulta->bindParam(':complemento', $this->complemento);
             $consulta->bindParam(':telefone', $this->telefone);
             $consulta->bindParam(':situacao', $this->situacao);
-            $consulta->bindParam('id_categoria', $this->id_categoria);
             $consulta->execute();
-
-
 
             $consulta_saldo = $pdo->prepare("update beneficiario.saldo_unidade set saldo = saldo - 1 WHERE cod_unidade = :cod_unidade;");
             $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
@@ -257,7 +228,8 @@ VALUES
 
             header('Location: ../beneficiario.php');
         } catch (PDOException $e) {
-          echo "Ocorreu um erro: " . $e->getMessage();        }
+            echo "Ocorreu um erro: $e";
+        }
     }
 
     public function alterarBeneficiario()
@@ -302,7 +274,6 @@ VALUES
             echo "Ocorreu um erro: $e";
         }
     }
-    
 
 
     //atualiza a situacao do beneficiario na cesta para 0, ou seja, ele est excluido da cesta
@@ -388,7 +359,7 @@ VALUES
                      AND CAST(dt_entrega_cupom AS DATE) BETWEEN CAST(:data_inicial AS DATE) AND CAST(:data_final AS DATE)
                      GROUP BY cupom, dt_entrega_cupom
                      ORDER BY cupom, dt_entrega_cupom";
-
+        
             $consulta = $pdo->prepare($sql);
             $consulta->bindValue(':data_inicial', $data_inicial_formatada);
             $consulta->bindValue(':data_final', $data_final_formatada);
@@ -421,7 +392,7 @@ VALUES
                      AND CAST(dt_entrega_cupom AS date) BETWEEN CAST(:data_inicial AS date) AND CAST(:data_final AS date)
                      GROUP BY CAST(dt_entrega_cupom AS date)
                      ORDER BY CAST(dt_entrega_cupom AS date)";
-
+        
             $consulta = $pdo->prepare($sql);
             $consulta->bindValue(':data_inicial', $data_inicial_formatada);
             $consulta->bindValue(':data_final', $data_final_formatada);
@@ -451,7 +422,7 @@ VALUES
                      FROM beneficiario.cesta AS cp
                      WHERE entregue_cupom = 1 
                      AND CAST(dt_entrega_cupom AS date) BETWEEN CAST(:data_inicial AS date) AND CAST(:data_final AS date)";
-
+        
             $consulta = $pdo->prepare($sql);
             $consulta->bindValue(':data_inicial', $data_inicial_formatada);
             $consulta->bindValue(':data_final', $data_final_formatada);
@@ -494,19 +465,19 @@ VALUES
             die("Erro ao gerar os relatórios");
         }
     }
-
+    
     public function exibirBeneficiarioPesquisa($cod_unidade, $int_nivel, $where)
     {
         try {
             $pdo = Database::conexao();
-
+            
             $sql_base = "SELECT cod_beneficiario, nis, cpf, nome, b.cod_bairro, vch_bairro, localidade, endereco, 
                             telefone, b.cod_tipo, vch_tipo, cod_usuario, situacao 
                         FROM beneficiario.beneficiario b
                         INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
                         INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
                         WHERE ";
-
+            
             if ($int_nivel == "1") {
                 $sql = $sql_base . $where . " AND situacao < 2 AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf) AND b.nis NOT IN (SELECT f.nis FROM beneficiario.folha_p_2023 f WHERE f.nis = b.nis AND f.nis IS NOT NULL) ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
             } else {
@@ -516,92 +487,61 @@ VALUES
             $consulta = $pdo->prepare($sql);
             $consulta->bindParam(':limite', $this->limite, PDO::PARAM_INT);
             $consulta->bindParam(':inicio', $this->inicio, PDO::PARAM_INT);
-
+            
             if ($int_nivel != "1") {
                 $consulta->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
             }
 
             $consulta->execute();
             return $consulta;
+            
         } catch (PDOexception $error_sql) {
             echo 'Erro ao retornar os Dados.' . $error_sql->getMessage();
         }
     }
 
-    public function exibirBeneficiario(int $cod_unidade, int $int_nivel, int $page = 1, int $perPage = 50): array
+    public function exibirBeneficiario($cod_unidade, $int_nivel)
     {
         try {
-            $pdo    = Database::conexao();
-            $offset = ($page - 1) * $perPage;
+            $pdo = Database::conexao();
 
-            // Base SELECT
-            $select = "SELECT cod_beneficiario, nis, cpf, nome, b.cod_bairro, vch_bairro, localidade, endereco, 
-                          telefone, b.cod_tipo, vch_tipo, cod_usuario, situacao 
-                     FROM beneficiario.beneficiario b
-               INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
-               INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
-                    WHERE (situacao = 0 OR situacao = 1)
-                      AND b.cpf NOT IN (
-                          SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf
-                      )";
-
-            // Base COUNT
-            $count = "SELECT COUNT(*) 
-                    FROM beneficiario.beneficiario b
-              INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
-              INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
-                   WHERE (situacao = 0 OR situacao = 1)
-                     AND b.cpf NOT IN (
-                         SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf
-                     )";
-
-            // Restrição por unidade se não for nível 1
-            $params = [];
-            if ($int_nivel != 1) {
-                $select .= " AND b.cod_unidade = :cod_unidade";
-                $count  .= " AND b.cod_unidade = :cod_unidade";
-                $params[':cod_unidade'] = $cod_unidade;
+            if ($int_nivel == "1") {
+                $sql = "SELECT cod_beneficiario, nis, cpf, nome, b.cod_bairro, vch_bairro, localidade, endereco, 
+                            telefone, b.cod_tipo, vch_tipo, cod_usuario, situacao 
+                        FROM beneficiario.beneficiario b
+                        INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
+                        INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
+                        WHERE (situacao = 0 OR situacao = 1) 
+                        AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf)
+                        ORDER BY situacao ASC, nome ASC 
+                        LIMIT :limite OFFSET :inicio"; 
+            } else {
+                $sql = "SELECT cod_beneficiario, nis, cpf, nome, b.cod_bairro, vch_bairro, localidade, endereco, 
+                            telefone, b.cod_tipo, vch_tipo, cod_usuario, situacao 
+                        FROM beneficiario.beneficiario b
+                        INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
+                        INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
+                        WHERE b.cod_unidade = :cod_unidade AND (situacao = 0 OR situacao = 1) 
+                        AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf)
+                        ORDER BY situacao ASC, nome ASC 
+                        LIMIT :limite OFFSET :inicio";
             }
 
-            // Finaliza SELECT com ordenação e paginação
-            $select .= " ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
-
-            // Executa COUNT
-            $stmtCount = $pdo->prepare($count);
-            if (isset($params[':cod_unidade'])) {
-                $stmtCount->bindValue(':cod_unidade', $params[':cod_unidade'], PDO::PARAM_INT);
+            $consulta = $pdo->prepare($sql);
+            $consulta->bindParam(':limite', $this->limite, PDO::PARAM_INT);
+            $consulta->bindParam(':inicio', $this->inicio, PDO::PARAM_INT);
+            
+            if ($int_nivel != "1") {
+                 $consulta->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
             }
-            $stmtCount->execute();
-            $total = (int) $stmtCount->fetchColumn();
 
-            // Executa SELECT paginado
-            $stmt = $pdo->prepare($select);
-            foreach ($params as $key => $val) {
-                $stmt->bindValue($key, $val, PDO::PARAM_INT);
-            }
-            $stmt->bindValue(':limite', $perPage, PDO::PARAM_INT);
-            $stmt->bindValue(':inicio', $offset, PDO::PARAM_INT);
-            $stmt->execute();
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $consulta->execute();
+            return $consulta;
 
-            return [
-                'data'     => $data,
-                'total'    => $total,
-                'page'     => $page,
-                'perPage'  => $perPage
-            ];
-        } catch (PDOException $e) {
-            error_log("Erro ao retornar beneficiários: " . $e->getMessage());
-            return [
-                'data'     => [],
-                'total'    => 0,
-                'page'     => $page,
-                'perPage'  => $perPage,
-                'error'    => $e->getMessage()
-            ];
+        } catch (PDOexception $error_sql) {
+            echo 'Erro ao retornar os Dados.' . $error_sql->getMessage();
         }
     }
-
 
 
     public function exibirbeneficiarioOrder()

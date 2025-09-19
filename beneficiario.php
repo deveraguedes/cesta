@@ -1,7 +1,10 @@
 <?php
+session_start(); // garante que a sessão está iniciada
+
 include_once "classes/usuarios.class.php";
 include_once "classes/login.class.php";
 include_once "classes/beneficiario.class.php";
+include_once "classes/categoria.class.php"; // nova classe de categorias
 
 $l = new LoginUsuario();
 if ($l->isLoggedIn() && $_SESSION['int_level'] > 0) {
@@ -24,6 +27,12 @@ $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPag
 
 $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
+
+// Se for nível 2, carrega categorias predefinidas
+if ($int_nivel == 2) {
+    $c = new Categoria();
+    $categorias = $c->listarCategorias();
+}
 ?>
 
 <!DOCTYPE html>
@@ -31,7 +40,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
 <head>
   <meta charset="utf-8">
-  <title>Cadastro de Beneficiários</title>
+  <title>Lista de Beneficiários</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <style>
@@ -40,8 +49,6 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       background-color: #800020;
       /* fundo vinho */
     }
-
-    /* Sidebar vinho */
     #sidebar {
       min-height: 100vh;
       background-color: #4b0010;
@@ -60,7 +67,6 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       border-radius: 8px;
     }
 
-    /* Conteúdo principal */
     #content {
       padding: 20px;
       background: #fff;
@@ -70,7 +76,6 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       margin: 20px;
     }
 
-    /* Tabela */
     table.dataTable {
       border-radius: 12px;
       overflow: hidden;
@@ -91,7 +96,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
   <div class="d-flex">
     <!-- Sidebar -->
     <div id="sidebar" class="p-3">
-      <div class="container text-center" style="padding-bottom: 10  px; border-bottom: 1px solid #3d3d3dff; margin-bottom: 20px;">
+      <div class="container text-center" style="padding-bottom: 10px; border-bottom: 1px solid #3d3d3dff; margin-bottom: 20px;">
         <h3>Bem-vindo <br> <?= htmlspecialchars($firstName); ?></h3>
         <a href="processamento/logout.php" class="nav-link">Sair</a>
       </div>
@@ -113,65 +118,77 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       </div>
     </div>
 
-    <!-- Conteúdo -->
-    <div id="content">
-      <div class="container-fluid">
-        <h2 class="mb-4">Cadastro de Beneficiários</h2>
+  <!-- Conteúdo -->
+  <div id="content">
+    <div class="container-fluid">
+      <h2 class="mb-4">Lista de Beneficiários</h2>
 
-        <table id="tabela" class="table table-striped table-bordered">
-          <thead>
+      <table id="tabela" class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>NIS</th>
+            <th>CPF</th>
+            <th>Nome</th>
+            <th>Bairro</th>
+            <th>Localidade</th>
+            <th>Endereço</th>
+            <th>Tipo de Beneficiário</th>
+            <?php if ($int_nivel == 2): ?>
+              <th>Categoria</th>
+            <?php endif; ?>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($beneficiarios['data'] as $row) { ?>
             <tr>
-              <th>NIS</th>
-              <th>CPF</th>
-              <th>Nome</th>
-              <th>Bairro</th>
-              <th>Localidade</th>
-              <th>Endereço</th>
-              <th>Tipo de Beneficiário</th>
-              <th>Situação</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($beneficiarios['data'] as $row) { ?>
-              <tr>
-                <td><?= $row["nis"] ?></td>
-                <td><?= $row["cpf"] ?></td>
-                <td><?= $row["nome"] ?></td>
-                <td><?= $row["vch_bairro"] ?></td>
-                <td><?= $row["localidade"] ?></td>
-                <td><?= $row["endereco"] ?></td>
-                <td><?= $row["vch_tipo"] ?></td>
-                <td>
-                  <?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta" ?>
-                </td>
-                <td>
-                  <!-- Botão Alterar -->
-                  <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>"
-                    class="btn btn-sm btn-primary mb-1">
-                    Alterar
-                  </a>
+              <td><?= htmlspecialchars($row["nis"]); ?></td>
+              <td><?= htmlspecialchars($row["cpf"]); ?></td>
+              <td><?= htmlspecialchars($row["nome"]); ?></td>
+              <td><?= htmlspecialchars($row["vch_bairro"]); ?></td>
+              <td><?= htmlspecialchars($row["localidade"]); ?></td>
+              <td><?= htmlspecialchars($row["endereco"]); ?></td>
+              <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
 
-                  <!-- Botões Inserir / Remover -->
-                  <?php if ($row["situacao"] == 1) { ?>
-                    <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>"
-                      class="btn btn-sm btn-danger mb-1">
-                      Remover da Cesta
-                    </a>
-                  <?php } else { ?>
-                    <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>"
-                      class="btn btn-sm btn-success mb-1">
-                      Inserir na Cesta
-                    </a>
-                  <?php } ?>
+              <?php if ($int_nivel == 2): ?>
+                <td>
+                  <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
+                  <a href="forms/atribuir_categoria.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>" 
+                     class="btn btn-sm btn-warning mt-1">Definir</a>
                 </td>
-              </tr>
-            <?php } ?>
-          </tbody>
-        </table>
-      </div>
+              <?php endif; ?>
+
+              <td>
+                <?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?>
+              </td>
+              <td>
+                <!-- Botão Alterar -->
+                <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" 
+                   class="btn btn-sm btn-primary mb-1">
+                   Alterar
+                </a>
+
+                <!-- Botões Inserir / Remover -->
+                <?php if ($row["situacao"] == 1) { ?>
+                  <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" 
+                     class="btn btn-sm btn-danger mb-1">
+                     Remover da Cesta
+                  </a>
+                <?php } else { ?>
+                  <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" 
+                     class="btn btn-sm btn-success mb-1">
+                     Inserir na Cesta
+                  </a>
+                <?php } ?>
+              </td>
+            </tr>
+          <?php } ?>
+        </tbody>
+      </table>
     </div>
   </div>
+</div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -182,12 +199,9 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
           url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
         },
         pageLength: 25,
-        order: [
-          [2, 'asc']
-        ]
+        order: [[2, 'asc']]
       });
     });
   </script>
 </body>
-
 </html>
