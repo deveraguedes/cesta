@@ -90,7 +90,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
   <div class="d-flex">
     <!-- Sidebar -->
-    <div id="sidebar" class="p-3" style="width: 250px;">
+    <div id="sidebar" class="p-3">
       <div class="container text-center" style="padding-bottom: 10  px; border-bottom: 1px solid #3d3d3dff; margin-bottom: 20px;">
         <h3>Bem-vindo <br> <?= htmlspecialchars($firstName); ?></h3>
         <a href="processamento/logout.php" class="nav-link">Sair</a>

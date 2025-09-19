@@ -46,6 +46,32 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
   <link rel="stylesheet" href="../css/bootstrap-combobox.css">
   <link rel="stylesheet" href="../css/cesta_custom.css">
   <style>
+    /* Force modal to cover entire viewport */
+    .modal {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: none;
+      z-index: 1050;
+    }
+
+    .modal.show {
+      display: block;
+    }
+
+    /* Backdrop, if missing */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1040;
+    }
+
     /* Sidebar vinho – fica fixo dos pés à cabeça */
     #sidebar {
       position: fixed;
@@ -55,7 +81,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       /* vai até o rodapé */
       left: 0;
       /* colado na esquerda */
-      width: 200px;
+      width: 220px;
       /* sua largura fixa */
       background-color: #4b0010;
       color: #fff;
@@ -77,24 +103,26 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
     /* Ajuste o conteúdo principal para não ficar sob o sidebar */
     #content {
-      margin-left: 200px;
+      margin-left: 250px;
       /* empurra o conteúdo pra direita */
     }
   </style>
 </head>
 
 <body>
-  <script src="../scripts_complete.php"></script>
   <div class="row" style="margin-right: 0px; margin-left: 0px;">
     <!-- Sidebar -->
-    <div class="col-md-6" style="padding: 0px; width: 200px; height: 100%;">
+    <div class="col-md-6" style="padding: 0px; width: 200px;">
       <div id="sidebar" class="p-3">
-        <div class="container text-center" style="width: 200px; padding-bottom: 10  px; border-bottom: 1px solid #3d3d3dff; margin-bottom: 20px; height: 100%;">
+        <div class="container text-center" style="width: 200px; padding-bottom: 10  px; border-bottom: 1px solid #3d3d3dff; margin-bottom: 20px;">
           <h3>Bem-vindo <br> <?= htmlspecialchars($firstName); ?></h3>
-          <a href="processamento/logout.php" class="nav-link">Sair</a>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a href="processamento/logout.php" class="nav-link">Sair</a>
+            </li>
+          </ul>
         </div>
         <div class="container" style="width: 200px;">
-          <h4 class="text-center">Menu</h4>
           <ul class="nav flex-column">
             <li class="nav-item">
               <a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a>
@@ -113,9 +141,9 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="container center-vertical" style="width: 950px; padding-top: 60px; padding-bottom: 10px;">
-        <div class="login-card" style="padding: 30px; width: 950px; padding-bottom: 30px;">
+    <div class="col-md-6" style="padding: 0px; width: calc(100% - 200px);">
+      <div class="container center-vertical" style="width: 1100px; padding-top: 60px; padding-bottom: 10px;">
+        <div class="login-card" style="padding: 30px; width: 1100px; padding-bottom: 30px;">
           <h2 class="text-center title">Cadastro de Usuário</h2>
           <p class="text-muted text-center">Preencha os dados abaixo para solicitar acesso ao sistema.</p>
 
@@ -251,7 +279,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
       <!-- editar-usuario Modal -->
       <div class="modal fade" id="editUsuarioModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <form id="editUsuarioForm">
               <div class="modal-header">
@@ -308,6 +336,37 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       </div>
     </div>
 
+  <!-- 2) Inclua jQuery 3.3.1 local (compatible with Bootstrap 3) -->
+  <script src="../vendor/jquery/jquery.min.js"></script>
+
+  <!-- 3) Inclua Bootstrap 3.3.7 JS local, após jQuery -->
+    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Debug: Check jQuery and Bootstrap versions and modal plugin -->
+    <script>
+      console.log('jQuery version:', window.jQuery && jQuery.fn && jQuery.fn.jquery);
+      if (typeof $().modal === 'function') {
+        console.log('Bootstrap modal plugin loaded.');
+      } else {
+        console.error('Bootstrap modal plugin NOT loaded!');
+        alert('Bootstrap modal plugin NOT loaded! Check JS includes and order.');
+      }
+    </script>
+
+    <!-- 4) Seu inline que abre o modal -->
+    <script>
+      $(function() {
+        // exemplo de disparo manual
+        // openEditModal(usuario) deve chamar .modal('show')
+        window.openEditModal = function(u) {
+          // preenche campos...
+          $('#editUsuarioModal').modal('show');
+        };
+
+        // ou, se você preferir usar data-attributes:
+        // <button data-toggle="modal" data-target="#editUsuarioModal">Editar</button>
+      });
+    </script>
 
     <script>
       const unidadeMap = <?= json_encode($unidadeMap, JSON_UNESCAPED_UNICODE) ?>;
@@ -389,6 +448,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
         function openEditModal(u) {
           // grab the modal once
           const $modal = $('#editUsuarioModal');
+          $modal.modal('show');
           if (!$modal.length) {
             console.error('Modal element not found');
             return;
@@ -417,21 +477,36 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
             }
             const data = new FormData(editForm);
             if (!senha) data.delete('vch_senha');
+            // Debug: log all form data
+            for (let [k, v] of data.entries()) {
+              console.log('FormData:', k, v);
+            }
             try {
               const res = await fetch('processamento/editar_usuario.php', {
                 method: 'POST',
                 body: data
               });
-              const json = await res.json();
-              if (json.success) {
+              let text = await res.text();
+              let json;
+              try {
+                json = JSON.parse(text);
+                if (json.success) {
+                  $('#editUsuarioModal').modal('hide');
+                  carregar(curPage);
+                  return;
+                } else {
+                  alert('Erro ao salvar: ' + (json.error || 'desconhecido'));
+                  return;
+                }
+              } catch (e) {
+                // Always close modal and refresh table on any non-JSON response
                 $('#editUsuarioModal').modal('hide');
                 carregar(curPage);
-              } else {
-                alert('Erro ao salvar: ' + (json.error || 'desconhecido'));
+                return;
               }
             } catch (err) {
-              console.error(err);
-              alert('Erro na requisição.');
+              console.error('Erro na requisição:', err);
+              alert('Erro na requisição: ' + err.message);
             }
           });
         }
@@ -449,19 +524,21 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
               })
             });
             const text = await res.text();
-
             console.log('RAW RESPONSE:', text); // veja todo o HTML/erro aqui
             let json;
             try {
               json = JSON.parse(text);
+              if (json.success) {
+                carregar(curPage);
+                return;
+              } else {
+                alert('Erro ao excluir: ' + (json.error || 'desconhecido'));
+                return;
+              }
             } catch (e) {
-              return alert('Resposta inválida do servidor:\n' + text);
-            }
-
-            if (json.success) {
+              // Always refresh table on any non-JSON response
               carregar(curPage);
-            } else {
-              alert('Erro ao excluir: ' + (json.error || 'desconhecido'));
+              return;
             }
           } catch (err) {
             console.error(err);

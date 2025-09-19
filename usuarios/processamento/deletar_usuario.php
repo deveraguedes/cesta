@@ -1,4 +1,14 @@
 <?php
+
+// Block direct access by GET or non-AJAX
+if (php_sapi_name() !== 'cli') {
+  $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$isAjax) {
+    http_response_code(403);
+    exit('Acesso negado.');
+  }
+}
+
 session_start();
 header('Content-Type: application/json; charset=UTF-8');
 

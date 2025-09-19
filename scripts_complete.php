@@ -4,7 +4,9 @@
 <script src="../js/bootstrap.min.js"></script>
 <script src="../js/bootstrap-combobox.js"></script>
 <script src="../js/validator.min.js"></script>
+<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script>
+	
 // Condicional para loading
 $('form').validator().on('submit', function (e) {
   if (e.isDefaultPrevented()) {

@@ -1,8 +1,19 @@
 <?php
+
+
+// Block direct access by GET or non-AJAX
+if (php_sapi_name() !== 'cli') {
+    $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$isAjax) {
+        http_response_code(403);
+        exit('Acesso negado.');
+    }
+}
+
 session_start();
 header('Content-Type: application/json; charset=UTF-8');
-error_reporting(0);
-ini_set('display_errors','Off');
+error_reporting(E_ALL);
+ini_set('display_errors','On');
 
 if (empty($_SESSION['user_id'])) {
     http_response_code(403);
@@ -10,7 +21,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../classes/usuarios.class.php';
+require_once __DIR__ . '/../../classes/usuarios.class.php';
 $u = new Usuario();
 
 try {

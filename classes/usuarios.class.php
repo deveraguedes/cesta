@@ -1,5 +1,12 @@
-  <?php
-    include_once __DIR__ . '/conexao.class.php';
+
+<?php
+// Block direct access to this class file
+if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
+    http_response_code(403);
+    exit('Acesso negado.');
+}
+
+include_once __DIR__ . '/conexao.class.php';
 
     class Usuario
     {
@@ -223,21 +230,7 @@
                 throw new InvalidArgumentException("nome_duplicado");
             }
 
-            // 4) Mesma checagem para unidade
-            $dup = $this->pdo->prepare("
-            SELECT 1
-              FROM beneficiario.usuario
-             WHERE cod_unidade = :un
-               AND cod_usuario <> :cod
-             LIMIT 1
-        ");
-            $dup->execute([
-                ':un'  => (int)$data['cod_unidade'],
-                ':cod' => $codUsuario
-            ]);
-            if ($dup->fetchColumn()) {
-                throw new InvalidArgumentException("unidade_duplicada");
-            }
+                        // 4) Permitir múltiplos usuários por unidade: nenhuma checagem
 
             // 5) Monta lista de campos a atualizar
             $fields = [
