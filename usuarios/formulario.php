@@ -125,16 +125,16 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
         <div class="container" style="width: 200px;">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a>
+              <a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a>
             </li>
             <li class="nav-item">
-              <a href="beneficiario.php" class="nav-link">Beneficiários</a>
+              <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
             </li>
             <li class="nav-item">
-              <a href="relatorio.php" class="nav-link">Relatórios</a>
+              <a href="/cesta/relatorio.php" class="nav-link">Relatórios</a>
             </li>
             <li class="nav-item">
-              <a href="usuarios/logout.php" class="nav-link">Sair</a>
+              <a href="/cesta/usuarios/logout.php" class="nav-link">Sair</a>
             </li>
           </ul>
         </div>
