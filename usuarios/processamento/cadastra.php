@@ -2,6 +2,8 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+
+session_start();
 require_once '../../classes/usuarios.class.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -10,6 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
+  // Enforce unidade for int_nivel 2 users
+  if (isset($_SESSION['int_level']) && (int)$_SESSION['int_level'] === 2) {
+    $_POST['cod_unidade'] = (int)$_SESSION['cod_unidade'];
+  }
   $usuario = new Usuario();
   $usuario->setData($_POST);
   $usuario->cadastrar();

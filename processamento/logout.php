@@ -2,5 +2,5 @@
 session_start();
 session_unset();
 session_destroy();
-header('Location: ../login.php'); // ou para onde quiser redirecionar
+header('Location: ../index.php'); // ou para onde quiser redirecionar
 exit;

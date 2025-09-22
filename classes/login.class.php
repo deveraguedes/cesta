@@ -22,6 +22,7 @@ class LoginUsuario {
      */
     public function login(string $vch_login, string $senha): bool {
         try {
+            error_log("[LOGIN DEBUG] Tentando login para: $vch_login");
             $stmt = $this->db->prepare("
                 SELECT cod_usuario
                      , vch_login
@@ -38,6 +39,7 @@ class LoginUsuario {
 
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$user) {
+                error_log("[LOGIN DEBUG] Usuário não encontrado: $vch_login");
                 return false;
             }
 
@@ -45,13 +47,25 @@ class LoginUsuario {
             $valid = false;
 
             // legacy MD5?
-            if (strlen($storedHash) === 32 && md5($senha) === $storedHash) {
-                $valid = true;
-            }
-            // bcrypt ou password_hash()
-            elseif (password_verify($senha, $storedHash)) {
-                $valid = true;
-            }
+                // 1. Custom hash (UTF-16LE MD5, uppercase hex)
+                $uni = iconv('UTF-8', 'UTF-16LE', $senha);
+                $customHash = strtoupper(bin2hex(hash('md5', $uni, true)));
+                if ($customHash === $storedHash) {
+                    error_log("[LOGIN DEBUG] Senha válida por hash custom para $vch_login");
+                    $valid = true;
+                }
+                // 2. Legacy plain MD5 (32-char lowercase)
+                elseif (strlen($storedHash) === 32 && md5($senha) === $storedHash) {
+                    error_log("[LOGIN DEBUG] Senha válida por legacy MD5 para $vch_login");
+                    $valid = true;
+                }
+                // 3. password_hash (bcrypt, etc)
+                elseif (password_verify($senha, $storedHash)) {
+                    error_log("[LOGIN DEBUG] Senha válida por password_verify para $vch_login");
+                    $valid = true;
+                } else {
+                    error_log("[LOGIN DEBUG] Senha inválida para $vch_login. Hash esperado: $storedHash, hash calculado: $customHash");
+                }
 
             if (!$valid) {
                 return false;
@@ -67,9 +81,10 @@ class LoginUsuario {
             $_SESSION['cod_unidade']   = (int)$user['cod_unidade'];
             $_SESSION['sessiontime']   = time() + 1200; // 20 min de inatividade
 
+            error_log("[LOGIN DEBUG] Login bem-sucedido para $vch_login");
             return true;
         } catch (PDOException $e) {
-            error_log("Login error: " . $e->getMessage());
+            error_log("[LOGIN ERROR] " . $e->getMessage());
             return false;
         }
     }

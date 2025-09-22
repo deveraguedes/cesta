@@ -35,9 +35,9 @@
       if (isset($_GET['response'])) {
         $response = $_GET['response'];
         $messages = [
-          1 => ['success', 'Sucesso!', 'Verifique seu e-mail e conclua o cadastro.'],
-          2 => ['danger', 'Falha!', 'E-mail já cadastrado.'],
-          3 => ['danger', 'Falha!', 'Usuário ou senha incorretos ou seu usuário ainda não foi validado, verifique seu e-mail.'],
+          1 => ['danger', 'Falha!', 'Usuário ou senha incorretos.'],
+          2 => ['danger', 'Falha!', 'Preencha todos os campos para entrar.'],
+          3 => ['success', 'Sucesso!', 'Verifique seu e-mail e conclua o cadastro.'],
           4 => ['success', 'Sucesso!', 'Usuário foi ativado!'],
           5 => ['success', 'Sucesso!', 'Verifique seu e-mail e recupere sua senha.']
         ];

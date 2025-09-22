@@ -118,7 +118,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
           <h3>Bem-vindo <br> <?= htmlspecialchars($firstName); ?></h3>
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a href="processamento/logout.php" class="nav-link">Sair</a>
+              <a href="../processamento/logout.php" class="nav-link">Sair</a>
             </li>
           </ul>
         </div>
@@ -133,9 +133,6 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
             <li class="nav-item">
               <a href="/cesta/relatorio.php" class="nav-link">Relatórios</a>
             </li>
-            <li class="nav-item">
-              <a href="/cesta/usuarios/logout.php" class="nav-link">Sair</a>
-            </li>
           </ul>
         </div>
       </div>
@@ -147,7 +144,17 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
           <h2 class="text-center title">Cadastro de Usuário</h2>
           <p class="text-muted text-center">Preencha os dados abaixo para solicitar acesso ao sistema.</p>
 
-          <form method="post" action="processamento/cadastra.php" data-toggle="validator" role="form">
+          <form method="post" action="processamento/cadastra.php" data-toggle="validator" role="form" id="UsuarioForm">
+            <?php if ($currentLevel === 1): ?>
+              <div class="form-group">
+                <label for="vch_email">Nivel de acesso</label>
+                <select name="int_nivel" id="int_nivel" class="form-control" required>
+                  <option value="">Selecione</option>
+                  <option value="1">Administrador</option>
+                  <option value="2">Usuário Padrão</option>
+                </select>
+              </div>
+            <?php endif; ?>
 
             <div class="form-group">
               <label for="vch_nome">Nome completo</label>
@@ -189,7 +196,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
             <input type="text" class="form-control" name="cpf" id="cpf" maxlength="14" oninput="mascara(this)" required>  
           </div>-->
               </div>
-              <button type="submit" class="btn btn-primary btn-lg btn-block color" style="margin-top: 30px;">
+              <button type="submit" class="btn btn-primary btn-lg btn-block color" style="margin-top: 30px;" id="btnCadastrar">
                 Cadastrar
               </button>
             </div>
@@ -238,14 +245,16 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
             </div>
             <div class="col-md-6">
               <select name="cod_unidade" id="filtroUnidade" class="combobox form-control" required>
-                <option value="">Selecione ou digite</option>
-                <?php foreach ($unidades as $row_unidade): ?>
-                  <option value="<?php echo $row_unidade['cod_unidade']; ?>">
-                    <?php echo $row_unidade['vch_unidade']; ?>
-                  </option>
-                <?php endforeach; ?>
+                <option value="0" <?= empty($_SESSION['cod_unidade']) ? ' selected' : '' ?>>Todos</option>
+                <option value="<?php echo $row_unidade['cod_unidade']; ?>" <?= ((int)$_SESSION['cod_unidade'] == (int)$row_unidade['cod_unidade']) ? ' selected' : '' ?>>
+                  <?php foreach ($unidades as $row_unidade): ?>
+                <option value="<?php echo $row_unidade['cod_unidade']; ?>">
+                  <?php echo $row_unidade['vch_unidade']; ?>
+                </option>
+              <?php endforeach; ?>
               </select>
             </div>
+            <div id="mensagemErro" class="alert alert-danger" style="display:none;"></div>
             <table id="tabelaUsuarios" class="table table-bordered tableColor">
               <thead class="tableColorHeader">
                 <tr>
@@ -334,279 +343,334 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
           </div>
         </div>
       </div>
-    </div>
+      <!-- modal creating admin warning -->
+      <div class="modal fade" id="creatingAdminModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Atenção</h5>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <p>Você está prestes a criar um usuário com nível de administrador. Tem certeza que deseja continuar?</p>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                  Cancelar
+                </button>
+                <button type="button" class="btn btn-primary color" id="confirmCreateAdminBtn">Confirmar</button>
+              </div>
 
-  <!-- 2) Inclua jQuery 3.3.1 local (compatible with Bootstrap 3) -->
-  <script src="../vendor/jquery/jquery.min.js"></script>
+              <!-- 2) Inclua jQuery 3.3.1 local (compatible with Bootstrap 3) -->
+              <script src="../vendor/jquery/jquery.min.js"></script>
 
-  <!-- 3) Inclua Bootstrap 3.3.7 JS local, após jQuery -->
-    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+              <!-- 3) Inclua Bootstrap 3.3.7 JS local, após jQuery -->
+              <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
-    <!-- Debug: Check jQuery and Bootstrap versions and modal plugin -->
-    <script>
-      console.log('jQuery version:', window.jQuery && jQuery.fn && jQuery.fn.jquery);
-      if (typeof $().modal === 'function') {
-        console.log('Bootstrap modal plugin loaded.');
-      } else {
-        console.error('Bootstrap modal plugin NOT loaded!');
-        alert('Bootstrap modal plugin NOT loaded! Check JS includes and order.');
-      }
-    </script>
-
-    <!-- 4) Seu inline que abre o modal -->
-    <script>
-      $(function() {
-        // exemplo de disparo manual
-        // openEditModal(usuario) deve chamar .modal('show')
-        window.openEditModal = function(u) {
-          // preenche campos...
-          $('#editUsuarioModal').modal('show');
-        };
-
-        // ou, se você preferir usar data-attributes:
-        // <button data-toggle="modal" data-target="#editUsuarioModal">Editar</button>
-      });
-    </script>
-
-    <script>
-      const unidadeMap = <?= json_encode($unidadeMap, JSON_UNESCAPED_UNICODE) ?>;
-    </script>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const filtro = document.getElementById('filtroUnidade');
-        const tbodyEl = document.querySelector('#tabelaUsuarios tbody');
-        const pagerEl = document.getElementById('pagerUsuarios');
-        const perPage = 6;
-        let curPage = 1;
-
-        if (!filtro || !tbodyEl || !pagerEl) return;
-
-        filtro.addEventListener('change', () => {
-          curPage = 1;
-          carregar(curPage);
-        });
-
-        carregar(curPage);
-
-        async function carregar(page) {
-          try {
-            const un = filtro.value || 0;
-            const resp = await fetch(
-              `processamento/listar_usuarios.php?unidade=${un}&page=${page}&per_page=${perPage}`
-            );
-            let text = await resp.text();
-            text = text.replace(/^[\s\xEF\xBB\xBF]+/, '');
-            const json = JSON.parse(text);
-
-            tbodyEl.innerHTML = '';
-            if (!json.success) {
-              tbodyEl.innerHTML = `<tr><td colspan="5">Erro: ${json.error||'—'}</td></tr>`;
-              return;
-            }
-            if (json.data.length === 0) {
-              tbodyEl.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
-            } else {
-              json.data.forEach(u => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-            <td>${formatDate(u.data_cadastro)}</td>
-            <td>${u.vch_nome}</td>
-            <td>${u.vch_login}</td>
-            <td>${unidadeMap[u.cod_unidade]||u.cod_unidade}</td>
-            <td></td>
-          `;
-                const cell = tr.querySelector('td:last-child');
-
-                // Editar (só admin)
-                if (currentUserLevel === 1) {
-                  const btnE = document.createElement('button');
-                  btnE.className = 'btn btn-sm btn-outline-secondary mr-2';
-                  btnE.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.854a.5.5 0 0 1 .708 0l1.292 1.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 3 10.707V13h2.293L13.5 4.793l-2.293-2.293z"/></svg>';
-                  btnE.onclick = () => openEditModal(u);
-                  cell.appendChild(btnE);
-                }
-
-                // Deletar (todos)
-                const btnD = document.createElement('button');
-                btnD.className = 'btn btn-sm btn-outline-danger';
-                btnD.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 5h4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5v-7z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4H2.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3H4h8h1.5a.5.5 0 0 0 0-1H12V1a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v1H2.5a.5.5 0 0 0 0 1z"/></svg>';
-                btnD.onclick = () => deletarUsuario(u.cod_usuario);
-                cell.appendChild(btnD);
-
-                tbodyEl.appendChild(tr);
-              });
-            }
-
-            renderPager(json.total, json.page, json.per_page);
-          } catch (err) {
-            console.error(err);
-            tbodyEl.innerHTML = '<tr><td colspan="5">Erro ao carregar tabela.</td></tr>';
-          }
-        }
-
-        function openEditModal(u) {
-          // grab the modal once
-          const $modal = $('#editUsuarioModal');
-          $modal.modal('show');
-          if (!$modal.length) {
-            console.error('Modal element not found');
-            return;
-          }
-
-          // fill fields via jQuery
-          $modal.find('#editCodUsuario').val(u.cod_usuario);
-          $modal.find('#editNome').val(u.vch_nome);
-          $modal.find('#editLogin').val(u.vch_login);
-          $modal.find('#editUnidade').val(u.cod_unidade);
-          // clear password inputs
-          $modal.find('#editSenha, #editSenhaConfirm').val('');
-
-          // show it
-          $modal.modal('show');
-        }
-
-        const editForm = document.getElementById('editUsuarioForm');
-        if (editForm) {
-          editForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const senha = document.getElementById('editSenha').value;
-            const confirma = document.getElementById('editSenhaConfirm').value;
-            if (senha && senha !== confirma) {
-              return alert('As senhas não coincidem.');
-            }
-            const data = new FormData(editForm);
-            if (!senha) data.delete('vch_senha');
-            // Debug: log all form data
-            for (let [k, v] of data.entries()) {
-              console.log('FormData:', k, v);
-            }
-            try {
-              const res = await fetch('processamento/editar_usuario.php', {
-                method: 'POST',
-                body: data
-              });
-              let text = await res.text();
-              let json;
-              try {
-                json = JSON.parse(text);
-                if (json.success) {
-                  $('#editUsuarioModal').modal('hide');
-                  carregar(curPage);
-                  return;
+              <!-- Debug: Check jQuery and Bootstrap versions and modal plugin -->
+              <script>
+                console.log('jQuery version:', window.jQuery && jQuery.fn && jQuery.fn.jquery);
+                if (typeof $().modal === 'function') {
+                  console.log('Bootstrap modal plugin loaded.');
                 } else {
-                  alert('Erro ao salvar: ' + (json.error || 'desconhecido'));
-                  return;
+                  console.error('Bootstrap modal plugin NOT loaded!');
+                  alert('Bootstrap modal plugin NOT loaded! Check JS includes and order.');
                 }
-              } catch (e) {
-                // Always close modal and refresh table on any non-JSON response
-                $('#editUsuarioModal').modal('hide');
-                carregar(curPage);
-                return;
-              }
-            } catch (err) {
-              console.error('Erro na requisição:', err);
-              alert('Erro na requisição: ' + err.message);
-            }
-          });
-        }
+              </script>
 
-        async function deletarUsuario(id) {
-          if (!confirm('Deseja realmente excluir este usuário?')) return;
-          try {
-            const res = await fetch('processamento/deletar_usuario.php', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },
-              body: new URLSearchParams({
-                cod: id
-              })
-            });
-            const text = await res.text();
-            console.log('RAW RESPONSE:', text); // veja todo o HTML/erro aqui
-            let json;
-            try {
-              json = JSON.parse(text);
-              if (json.success) {
-                carregar(curPage);
-                return;
-              } else {
-                alert('Erro ao excluir: ' + (json.error || 'desconhecido'));
-                return;
-              }
-            } catch (e) {
-              // Always refresh table on any non-JSON response
-              carregar(curPage);
-              return;
-            }
-          } catch (err) {
-            console.error(err);
-            alert('Erro na requisição: ' + err.message);
-          }
-        }
+              <!-- 4) Seu inline que abre o modal -->
+              <script>
+                $(function() {
+                  // exemplo de disparo manual
+                  // openEditModal(usuario) deve chamar .modal('show')
+                  window.openEditModal = function(u) {
+                    // preenche campos...
+                    $('#editUsuarioModal').modal('show');
+                  };
 
-        function renderPager(totalItems, page, perPage) {
-          const totalPages = Math.ceil(totalItems / perPage);
-          pagerEl.innerHTML = '';
-          if (totalPages < 2) return;
-          // Previous
-          const prevLi = document.createElement('li');
-          prevLi.className = `page-item ${page===1?'disabled':''}`;
-          prevLi.innerHTML = `<a class="page-link color" href="#">Anterior</a>`;
-          prevLi.onclick = e => {
-            e.preventDefault();
-            if (page > 1) carregar(page - 1);
-          };
-          pagerEl.appendChild(prevLi);
-          // Pages
-          for (let p = 1; p <= totalPages; p++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${p===page?'active':''}`;
-            li.innerHTML = `<a class="page-link color" href="#">${p}</a>`;
-            li.onclick = e => {
-              e.preventDefault();
-              if (p !== page) carregar(p);
-            };
-            pagerEl.appendChild(li);
-          }
-          // Next
-          const nextLi = document.createElement('li');
-          nextLi.className = `page-item ${page===totalPages?'disabled':''}`;
-          nextLi.innerHTML = `<a class="page-link color" href="#">Próxima</a>`;
-          nextLi.onclick = e => {
-            e.preventDefault();
-            if (page < totalPages) carregar(page + 1);
-          };
-          pagerEl.appendChild(nextLi);
-        }
+                  // ou, se você preferir usar data-attributes:
+                  // <button data-toggle="modal" data-target="#editUsuarioModal">Editar</button>
+                });
+              </script>
 
-        function formatDate(str) {
-          str = str.trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-            const d = new Date(str);
-            return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
-          }
-          const parts = str.split(/[-\/]/);
-          if (parts.length === 3) {
-            let dd, mm, yy;
-            if (parts[0].length === 4) {
-              yy = parts[0];
-              mm = parts[1];
-              dd = parts[2];
-            } else {
-              dd = parts[0];
-              mm = parts[1];
-              yy = parts[2];
-            }
-            const d = new Date(`${yy}-${mm}-${dd}`);
-            return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
-          }
-          const d = new Date(str);
-          return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
-        }
-      });
-    </script>
+
+              <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                  // 🔧 Variáveis globais e dados do servidor
+                  const unidadeMap = <?= json_encode($unidadeMap, JSON_UNESCAPED_UNICODE) ?>;
+                  const currentUserId = <?= isset($_SESSION['user_id']) ? json_encode($_SESSION['user_id']) : 'null' ?>;
+                  const currentUserLevel = <?= isset($_SESSION['int_level']) ? json_encode($_SESSION['int_level']) : 'null' ?>;
+
+                  // 🔍 Elementos da interface
+                  const filtro = document.getElementById('filtroUnidade');
+                  const tbodyEl = document.querySelector('#tabelaUsuarios tbody');
+                  const pagerEl = document.getElementById('pagerUsuarios');
+                  const form = document.getElementById('UsuarioForm');
+                  const nivelSelect = document.getElementById('int_nivel');
+                  const warningModal = $('#creatingAdminModal');
+                  const confirmBtn = document.getElementById('confirmCreateAdminBtn');
+
+                  // 📄 Configuração de paginação
+                  const perPage = 6;
+                  let curPage = 1;
+
+                  if (!filtro || !tbodyEl || !pagerEl) return;
+
+                  filtro.addEventListener('change', () => {
+                    curPage = 1;
+                    carregar(curPage);
+                  });
+
+                  carregar(curPage);
+
+                  async function carregar(page) {
+                    try {
+                      const un = filtro.value || 0;
+                      const resp = await fetch(
+                        `processamento/listar_usuarios.php?unidade=${un}&page=${page}&per_page=${perPage}`
+                      );
+                      let text = await resp.text();
+                      text = text.replace(/^[\s\xEF\xBB\xBF]+/, '');
+                      const json = JSON.parse(text);
+
+                      tbodyEl.innerHTML = '';
+                      if (!json.success) {
+                        tbodyEl.innerHTML = `<tr><td colspan="5">Erro: ${json.error||'—'}</td></tr>`;
+                        return;
+                      }
+                      if (json.data.length === 0) {
+                        tbodyEl.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
+                      } else {
+                        json.data.forEach(u => {
+                          const tr = document.createElement('tr');
+                          tr.innerHTML = `
+              <td>${formatDate(u.data_cadastro)}</td>
+              <td>${u.vch_nome}</td>
+              <td>${u.vch_login}</td>
+              <td>${unidadeMap[u.cod_unidade]||u.cod_unidade}</td>
+              <td></td>
+            `;
+                          const cell = tr.querySelector('td:last-child');
+
+                          // Editar (só admin)
+                          if (currentUserLevel === 1) {
+                            const btnE = document.createElement('button');
+                            btnE.className = 'btn btn-sm btn-outline-secondary mr-2';
+                            btnE.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.854a.5.5 0 0 1 .708 0l1.292 1.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 3 10.707V13h2.293L13.5 4.793l-2.293-2.293z"/></svg>';
+                            btnE.onclick = () => openEditModal(u);
+                            cell.appendChild(btnE);
+                          }
+
+                          // Deletar (todos)
+                          if (parseInt(u.int_nivel) !== 1 && parseInt(u.cod_usuario) !== parseInt(currentUserId)) {
+                            const btnD = document.createElement('button');
+                            btnD.className = 'btn btn-sm btn-outline-danger';
+                            btnD.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 5h4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5v-7z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4H2.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3H4h8h1.5a.5.5 0 0 0 0-1H12V1a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v1H2.5a.5.5 0 0 0 0 1z"/></svg>';
+                            btnD.onclick = () => deletarUsuario(u);
+                            cell.appendChild(btnD);
+                          }
+
+                          tbodyEl.appendChild(tr);
+                        });
+                      }
+
+                      renderPager(json.total, json.page, json.per_page);
+                    } catch (err) {
+                      console.error(err);
+                      tbodyEl.innerHTML = '<tr><td colspan="5">Erro ao carregar tabela.</td></tr>';
+                    }
+                  }
+
+                  function openEditModal(u) {
+                    // grab the modal once
+                    const $modal = $('#editUsuarioModal');
+                    $modal.modal('show');
+                    if (!$modal.length) {
+                      console.error('Modal element not found');
+                      return;
+                    }
+
+                    // fill fields via jQuery
+                    $modal.find('#editCodUsuario').val(u.cod_usuario);
+                    $modal.find('#editNome').val(u.vch_nome);
+                    $modal.find('#editLogin').val(u.vch_login);
+                    $modal.find('#editUnidade').val(u.cod_unidade);
+                    // clear password inputs
+                    $modal.find('#editSenha, #editSenhaConfirm').val('');
+
+                    // show it
+                    $modal.modal('show');
+                  }
+
+                  const editForm = document.getElementById('editUsuarioForm');
+                  if (editForm) {
+                    editForm.addEventListener('submit', async e => {
+                      e.preventDefault();
+                      const senha = document.getElementById('editSenha').value;
+                      const confirma = document.getElementById('editSenhaConfirm').value;
+                      if (senha && senha !== confirma) {
+                        return alert('As senhas não coincidem.');
+                      }
+                      const data = new FormData(editForm);
+                      if (!senha) data.delete('vch_senha');
+                      // Debug: log all form data
+                      for (let [k, v] of data.entries()) {
+                        console.log('FormData:', k, v);
+                      }
+                      try {
+                        const res = await fetch('processamento/editar_usuario.php', {
+                          method: 'POST',
+                          body: data
+                        });
+                        let text = await res.text();
+                        let json;
+                        try {
+                          json = JSON.parse(text);
+                          if (json.success) {
+                            $('#editUsuarioModal').modal('hide');
+                            carregar(curPage);
+                            return;
+                          } else {
+                            alert('Erro ao salvar: ' + (json.error || 'desconhecido'));
+                            return;
+                          }
+                        } catch (e) {
+                          // Always close modal and refresh table on any non-JSON response
+                          $('#editUsuarioModal').modal('hide');
+                          carregar(curPage);
+                          return;
+                        }
+                      } catch (err) {
+                        console.error('Erro na requisição:', err);
+                        alert('Erro na requisição: ' + err.message);
+                      }
+                    });
+                  }
+
+                  async function deletarUsuario(usuario) {
+                    if (parseInt(usuario.cod_usuario) === parseInt(currentUserId)) {
+                      showError('Você não pode excluir seu próprio usuário.');
+                      return;
+                    }
+
+                    if (parseInt(usuario.int_nivel) === 1) {
+                      showError('Você não pode excluir outro administrador.');
+                      return;
+                    }
+
+                    if (!confirm('Deseja realmente excluir este usuário?')) return;
+
+                    try {
+                      const res = await fetch('processamento/deletar_usuario.php', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                          cod: usuario.cod_usuario
+                        })
+                      });
+
+                      const text = await res.text();
+                      let json;
+                      try {
+                        json = JSON.parse(text);
+                        if (json.success) {
+                          document.getElementById('mensagemErro').style.display = 'none';
+                          carregar(curPage);
+                        } else {
+                          showError(json.error || 'Erro desconhecido ao excluir.');
+                        }
+                      } catch (e) {
+                        carregar(curPage);
+                      }
+                    } catch (err) {
+                      showError('Erro na requisição: ' + err.message);
+                    }
+
+                    function showError(msg) {
+                      const msgEl = document.getElementById('mensagemErro');
+                      msgEl.innerHTML = msg;
+                      msgEl.style.display = 'block';
+                    }
+                  }
+
+                  // Intercept form submission
+                  form.addEventListener('submit', function(e) {
+                    const nivel = nivelSelect ? nivelSelect.value : '';
+                    if (nivel === '1') {
+                      e.preventDefault(); // stop form for now
+                      warningModal.modal('show'); // show modal
+                    }
+                    // if not admin, form submits normally
+                  });
+
+                  // Confirm modal action
+                  confirmBtn.addEventListener('click', function() {
+                    warningModal.modal('hide');
+                    form.submit(); // submit after confirmation
+                  });
+
+                  function renderPager(totalItems, page, perPage) {
+                    const totalPages = Math.ceil(totalItems / perPage);
+                    pagerEl.innerHTML = '';
+                    if (totalPages < 2) return;
+                    // Previous
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${page===1?'disabled':''}`;
+                    prevLi.innerHTML = `<a class="page-link color" href="#">Anterior</a>`;
+                    prevLi.onclick = e => {
+                      e.preventDefault();
+                      if (page > 1) carregar(page - 1);
+                    };
+                    pagerEl.appendChild(prevLi);
+                    // Pages
+                    for (let p = 1; p <= totalPages; p++) {
+                      const li = document.createElement('li');
+                      li.className = `page-item ${p===page?'active':''}`;
+                      li.innerHTML = `<a class="page-link color" href="#">${p}</a>`;
+                      li.onclick = e => {
+                        e.preventDefault();
+                        if (p !== page) carregar(p);
+                      };
+                      pagerEl.appendChild(li);
+                    }
+                    // Next
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${page===totalPages?'disabled':''}`;
+                    nextLi.innerHTML = `<a class="page-link color" href="#">Próxima</a>`;
+                    nextLi.onclick = e => {
+                      e.preventDefault();
+                      if (page < totalPages) carregar(page + 1);
+                    };
+                    pagerEl.appendChild(nextLi);
+                  }
+
+                  function formatDate(str) {
+                    str = str.trim();
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                      const d = new Date(str);
+                      return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
+                    }
+                    const parts = str.split(/[-\/]/);
+                    if (parts.length === 3) {
+                      let dd, mm, yy;
+                      if (parts[0].length === 4) {
+                        yy = parts[0];
+                        mm = parts[1];
+                        dd = parts[2];
+                      } else {
+                        dd = parts[0];
+                        mm = parts[1];
+                        yy = parts[2];
+                      }
+                      const d = new Date(`${yy}-${mm}-${dd}`);
+                      return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
+                    }
+                    const d = new Date(str);
+                    return isNaN(d) ? str : d.toLocaleDateString('pt-BR');
+                  }
+                });
+              </script>
 
 
 </body>

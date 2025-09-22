@@ -19,12 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } else {
             // ❌ Incorrect credentials
-            header('Location: ../login.php?response=5');
+            header('Location: ../login.php?response=1');
             exit;
         }
     } else {
-        // ❌ Missing kfields
-        header('Location: ../login.php?response=3');
+        // ❌ Missing fields
+        header('Location: ../login.php?response=2');
         exit;
     }
 } else {
