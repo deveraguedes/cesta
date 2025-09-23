@@ -48,10 +48,39 @@ body {
 }
 
 .color:active {
-  background-color: var(--wine-dark);
-  border: none;
+  background-color: var(--wine-dark) !important;
+  border: none !important;
   transition: background-color 0.3s ease;
 }
+
+.color:focus {
+  box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.5);
+  border: none !important;
+  background-color: var(--wine-base) !important;
+}
+
+.color:disabled {
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  border: none !important;
+  cursor: not-allowed !important;
+}
+
+.color:disabled:hover {
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  border: none !important;
+  cursor: not-allowed !important;
+}
+
+.color:disabled:focus {
+  box-shadow: none !important;
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  border: none !important;
+  cursor: not-allowed !important;
+}
+
 
 /* pagination with our wine “color” theme */
 .pagination.color .page-link {

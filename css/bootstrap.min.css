@@ -3982,22 +3982,22 @@ fieldset[disabled] .btn-default:hover {
 .btn-primary.focus,
 .btn-primary:focus {
   color: #fff;
-  background-color: #286090;
-  border-color: #122b40
+  background-color: #4B0010;
+  border-color: #4B0010;
 }
 
 .btn-primary:hover {
   color: #fff;
-  background-color: #286090;
-  border-color: #204d74
+  background-color: #4B0010;
+  border-color: #4B0010;
 }
 
 .btn-primary.active,
 .btn-primary:active,
 .open>.dropdown-toggle.btn-primary {
   color: #fff;
-  background-color: #286090;
-  border-color: #204d74
+  background-color: #4B0010;
+  border: none !important;
 }
 
 .btn-primary.active.focus,
