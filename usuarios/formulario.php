@@ -246,12 +246,12 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
             <div class="col-md-6">
               <select name="cod_unidade" id="filtroUnidade" class="combobox form-control" required>
                 <option value="0" <?= empty($_SESSION['cod_unidade']) ? ' selected' : '' ?>>Todos</option>
-                <option value="<?php echo $row_unidade['cod_unidade']; ?>" <?= ((int)$_SESSION['cod_unidade'] == (int)$row_unidade['cod_unidade']) ? ' selected' : '' ?>>
-                  <?php foreach ($unidades as $row_unidade): ?>
-                <option value="<?php echo $row_unidade['cod_unidade']; ?>">
-                  <?php echo $row_unidade['vch_unidade']; ?>
-                </option>
-              <?php endforeach; ?>
+                <?php foreach ($unidades as $row_unidade): ?>
+                  <option value="<?= $row_unidade['cod_unidade']; ?>"
+                    <?= ((int)$_SESSION['cod_unidade'] === (int)$row_unidade['cod_unidade']) ? ' selected' : '' ?>>
+                    <?= $row_unidade['vch_unidade']; ?>
+                  </option>
+                <?php endforeach; ?>
               </select>
             </div>
             <div id="mensagemErro" class="alert alert-danger" style="display:none;"></div>

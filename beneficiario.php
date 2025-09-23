@@ -111,9 +111,6 @@ if ($int_nivel == 2) {
           <li class="nav-item">
             <a href="relatorio.php" class="nav-link">Relatórios</a>
           </li>
-          <li class="nav-item">
-            <a href="usuarios/logout.php" class="nav-link">Sair</a>
-          </li>
         </ul>
       </div>
     </div>

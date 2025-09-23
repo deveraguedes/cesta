@@ -26,16 +26,25 @@
   <!-- Login form -->
 
   <div class="container center-vertical" style="width: 450px;">
-    <div class="login-card" style="max-width: 400px; width: 100%; min-height: 500px; padding-top: 20px;">
+    <div class="login-card" style="max-width: 400px; width: 100%; min-height: 400px; padding-top: 20px;">
       <div class="text-center mb-4" style="padding-bottom: 10px;">
         <h1 class="mt-2 title">Acesso ao Sistema</h1>
         <p class="text-muted">Controle de cadastro de beneficiários.</p>
       </div>
+      <form method="post" action="processamento/logar.php" style="padding-top: 10px;">
+        <div class="form-group mb-3">
+          <input type="text" class="form-control input-lg" id="vch_login" name="vch_login" placeholder="Usuario" required>
+        </div>
+        <div class="form-group mb-3" style="padding-bottom: 10px;">
+          <input type="password" name="password" class="form-control input-lg" placeholder="Senha" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block color"> Entrar</button>
+      </form>
       <?php
       if (isset($_GET['response'])) {
         $response = $_GET['response'];
         $messages = [
-          1 => ['danger', 'Falha!', 'Usuário ou senha incorretos.'],
+          1 => ['danger', 'Falha!', 'Usuário ou senha incorretos, em caso de dúvidas entre em contato com o administrador.'],
           2 => ['danger', 'Falha!', 'Preencha todos os campos para entrar.'],
           3 => ['success', 'Sucesso!', 'Verifique seu e-mail e conclua o cadastro.'],
           4 => ['success', 'Sucesso!', 'Usuário foi ativado!'],
@@ -50,21 +59,11 @@
         }
       }
       ?>
-      <form method="post" action="processamento/logar.php" style="padding-top: 10px;">
-        <div class="form-group mb-3">
-          <input type="text" class="form-control input-lg" id="vch_login" name="vch_login" placeholder="Usuario" required>
-        </div>
-        <div class="form-group mb-3">
-          <input type="password" name="password" class="form-control input-lg" placeholder="Senha" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg btn-block color"> Entrar</button>
-        <a href="recuperar_senha.php" class="btn btn-primary btn-lg btn-block color">Esqueci minha senha</a>
-      </form>
-      <div class="center-vertical" style="padding-top: 3  0px; font-size: 14px; color: gray;">
+      <div class="center-vertical" style="padding-top: 20px; font-size: 14px; color: gray;">
         <p>&copy; Prefeitura Municipal de Camaçari </p>
-      </div>  
+      </div>
     </div>
-  </div>  
+  </div>
 </body>
 
 </html>
