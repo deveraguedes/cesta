@@ -156,21 +156,22 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
 
   <script>
     document.getElementById('searchInput').addEventListener('keyup', function() {
-      const filter = this.value.toLowerCase();
+      // normalize the search term: lowercase and remove dots/dashes/spaces
+      const filter = this.value.toLowerCase().replace(/[.\-\s]/g, '');
       const rows = document.querySelectorAll('#dataTable tbody tr');
 
       rows.forEach(row => {
-        // get all cells in this row
         const cells = row.querySelectorAll('td');
         let match = false;
 
         cells.forEach(cell => {
-          if (cell.textContent.toLowerCase().includes(filter)) {
+          // normalize cell text the same way
+          const text = cell.textContent.toLowerCase().replace(/[.\-\s]/g, '');
+          if (text.includes(filter)) {
             match = true;
           }
         });
 
-        // show row if any cell matched
         row.style.display = match ? '' : 'none';
       });
     });
