@@ -1,6 +1,6 @@
 <?php
 include_once('conexao.class.php');
-include_once "classes/categoria.class.php";
+include_once "categoria.class.php";
 
 class Beneficiario
 {
@@ -29,7 +29,7 @@ class Beneficiario
 
 
 
-    
+
     public function setCod_beneficiario($cod_beneficiario)
     {
         $this->cod_beneficiario = $cod_beneficiario;
@@ -202,7 +202,7 @@ class Beneficiario
         $this->db = Database::conexao();
     }
 
-    
+
 
 
 public function inserirBeneficiario()

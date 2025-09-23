@@ -152,6 +152,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                   <option value="">Selecione</option>
                   <option value="1">Administrador</option>
                   <option value="2">Usuário Padrão</option>
+                  <option value="3">Sedes</option>
                 </select>
               </div>
             <?php endif; ?>
