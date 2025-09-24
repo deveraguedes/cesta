@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
   echo "<script>alert('Categoria salva com sucesso!'); window.location='beneficiario.php';</script>";
   exit;
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -120,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           <li class="nav-item"><a href="beneficiario.php" class="nav-link">Beneficiários</a></li>
           <li class="nav-item"><a href="relatorio.php" class="nav-link">Relatórios</a></li>
           <?php if ($int_nivel == 1): ?>
-            <li class="nav-item"><a href="categorias.php" class="nav-link">Categorias</a></li>
+            <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
           <?php endif; ?>
         </ul>
       </div>
