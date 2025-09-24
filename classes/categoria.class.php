@@ -1,5 +1,6 @@
 <?php
 include_once('conexao.class.php');
+
 class Categoria {
 
     // Retorna todas as categorias
@@ -27,7 +28,7 @@ class Categoria {
             $sql = "INSERT INTO beneficiario.categoria (vch_categoria)
                     SELECT :nome1
                     WHERE NOT EXISTS (
-                        SELECT 1 FROM beneficiario.categoria WHERE vch_categoria = :nome2
+                        SELECT 1 FROM beneficiario.categoria WHERE LOWER(vch_categoria) = LOWER(:nome2)
                     )";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':nome1', $nome, PDO::PARAM_STR);
@@ -36,16 +37,32 @@ class Categoria {
         }
     }
 
-    // Adiciona uma nova categoria
+    // Adiciona uma nova categoria (com verificação de duplicata)
     public function adicionarCategoria($nome) {
         if (empty(trim($nome))) {
-            return false;
+            throw new Exception("O nome da categoria não pode estar vazio.");
         }
+
         $pdo = Database::conexao();
+        $nome = trim($nome);
+
+        // Verifica se já existe categoria com mesmo nome (ignora maiúsculas/minúsculas)
+        $sql = "SELECT COUNT(*) FROM beneficiario.categoria WHERE LOWER(vch_categoria) = LOWER(:nome)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->fetchColumn() > 0) {
+            throw new Exception("A categoria '{$nome}' já está cadastrada.");
+        }
+
+        // Insere se não existir
         $sql = "INSERT INTO beneficiario.categoria (vch_categoria) VALUES (:nome)";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
-        return $stmt->execute();
+        $stmt->execute();
+
+        return true;
     }
 
     // Exclui uma categoria (se não estiver em uso)
@@ -60,12 +77,14 @@ class Categoria {
         $qtd = $stmt->fetchColumn();
 
         if ($qtd > 0) {
-            return false; // não pode excluir categoria em uso
+            throw new Exception("Não é possível excluir: categoria em uso por beneficiários.");
         }
 
         $sql = "DELETE FROM beneficiario.categoria WHERE cod_categoria = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        return $stmt->execute();
+        $stmt->execute();
+
+        return true;
     }
 }

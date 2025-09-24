@@ -6,7 +6,7 @@ include_once "classes/categoria.class.php";
 
 $l = new LoginUsuario();
 
-// 🔒 Verifica login e nível de acesso (somente nível 1 pode acessar)
+//  Verifica login e nível de acesso (somente nível 1 pode acessar)
 if (!$l->isloggedin() || ($_SESSION['int_level'] ?? 0) != 1) {
     echo "<script>alert('Acesso negado.'); window.location='beneficiario.php';</script>";
     exit;
@@ -15,30 +15,40 @@ if (!$l->isloggedin() || ($_SESSION['int_level'] ?? 0) != 1) {
 $categoria = new Categoria();
 $categoria->criarCategoriasPadrao(); // garante categorias padrão
 
-// ➕ Adicionar categoria
+//  Adicionar categoria
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["nome"]) && ($_SESSION['int_level'] ?? 0) == 1) {
     $nome = trim($_POST["nome"]);
     if (!empty($nome)) {
-        $categoria->adicionarCategoria($nome);
+        try {
+            $categoria->adicionarCategoria($nome);
+            header("Location: categoria.php");
+            exit;
+        } catch (Exception $e) {
+            echo "<script>alert('".$e->getMessage()."'); window.location='categoria.php';</script>";
+            exit;
+        }
     }
-    header("Location: categorias.php");
-    exit;
 }
 
-// ❌ Excluir categoria
+//  Excluir categoria
 if (isset($_GET["excluir"]) && ($_SESSION['int_level'] ?? 0) == 1) {
     $id = (int)$_GET["excluir"];
     if ($id > 0) {
-        $categoria->excluirCategoria($id);
+        try {
+            $categoria->excluirCategoria($id);
+            header("Location: categoria.php");
+            exit;
+        } catch (Exception $e) {
+            echo "<script>alert('".$e->getMessage()."'); window.location='categoria.php';</script>";
+            exit;
+        }
     }
-    header("Location: categorias.php");
-    exit;
 }
 
-// 📋 Listar categorias
+//  Listar categorias
 $categorias = $categoria->listarCategorias();
 
-// 👤 Pega o primeiro nome do usuário logado
+//  Pega o primeiro nome do usuário logado
 $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 ?>
 <!DOCTYPE html>
@@ -98,7 +108,6 @@ $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
       </div>
     </div>
 
-    <!-- Conteúdo -->
     <div id="content">
       <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
