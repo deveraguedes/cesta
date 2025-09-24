@@ -92,8 +92,8 @@ $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
         <ul class="nav flex-column">
           <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
           <li class="nav-item"><a href="beneficiario.php" class="nav-link">Beneficiários</a></li>
-          <li class="nav-item"><a href="relatorio.php" class="nav-link">Relatórios</a></li>
-          <li class="nav-item"><a href="categorias.php" class="nav-link active">Categorias</a></li>
+          <li class="nav-item"><a href="relatorios/relat.php" class="nav-link">Relatórios</a></li>
+          <li class="nav-item"><a href="categoria.php" class="nav-link active">Categorias</a></li>
         </ul>
       </div>
     </div>

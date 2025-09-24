@@ -147,6 +147,9 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
             <li class="nav-item">
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
+            <li class="nav-item">
+              <a href="/cesta/categoria.php" class="nav-link active">Categorias</a>
+            </li>
           </ul>
         </div>
       </div>
