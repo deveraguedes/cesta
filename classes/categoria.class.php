@@ -1,111 +1,71 @@
 <?php
-// Inclui o arquivo de conexão com o banco de dados.
-require_once 'conexao.class.php';
+include_once('conexao.class.php');
+class Categoria {
 
-// Inicia a sessão apenas se necessário.
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-class Categoria
-{
-    private $db;
-
-    public function __construct()
-    {
-        // Conecta ao banco de dados ao instanciar a classe.
-        $this->db = Database::conexao();
+    // Retorna todas as categorias
+    public function listarCategorias() {
+        $pdo = Database::conexao();
+        $sql = "SELECT cod_categoria, vch_categoria 
+                  FROM beneficiario.categoria 
+              ORDER BY vch_categoria ASC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Lista todas as categorias cadastradas no banco de dados.
-     *
-     * @return array Array associativo contendo as categorias (cod_categoria, vch_categoria),
-     *               ou array vazio em caso de erro.
-     */
-    public function listarCategorias(): array
-    {
-        try {
-            $sql = "SELECT id_categoria, vch_categoria 
-                      FROM beneficiario.categoria 
-                  ORDER BY vch_categoria ASC";
-
-            $stmt = $this->db->prepare($sql);
+    // Cria categorias padrão caso não existam
+    public function criarCategoriasPadrao() {
+        $pdo = Database::conexao();
+        $categoriasPadrao = [
+            'Músico',
+            'Pai ou Mãe de Criança Atípica',
+            'Bolsa Família',
+            'Idoso',
+            'PCD'
+        ];
+        foreach ($categoriasPadrao as $nome) {
+            $sql = "INSERT INTO beneficiario.categoria (vch_categoria)
+                    SELECT :nome1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM beneficiario.categoria WHERE vch_categoria = :nome2
+                    )";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':nome1', $nome, PDO::PARAM_STR);
+            $stmt->bindValue(':nome2', $nome, PDO::PARAM_STR);
             $stmt->execute();
-
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (PDOException $e) {
-            error_log("[Categoria::listarCategorias] Erro: " . $e->getMessage());
-            return [];
         }
     }
 
-    /**
-     * Busca uma categoria pelo ID.
-     *
-     * @param int $id
-     * @return array|null Retorna os dados da categoria ou null se não encontrada.
-     */
-    public function buscarPorId(int $id): ?array
-    {
-        try {
-            $sql = "SELECT id_categoria, vch_categoria 
-                      FROM beneficiario.categoria 
-                     WHERE cod_categoria = :id";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(":id", $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $categoria = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $categoria ?: null;
-        } catch (PDOException $e) {
-            error_log("[Categoria::buscarPorId] Erro: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Adiciona uma nova categoria.
-     *
-     * @param string $nome
-     * @return bool Verdadeiro se inserido com sucesso, falso caso contrário.
-     */
-    public function adicionar(string $nome): bool
-    {
-        try {
-            $sql = "INSERT INTO beneficiario.categoria (vch_categoria) 
-                    VALUES (:nome)";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(":nome", $nome, PDO::PARAM_STR);
-
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("[Categoria::adicionar] Erro: " . $e->getMessage());
+    // Adiciona uma nova categoria
+    public function adicionarCategoria($nome) {
+        if (empty(trim($nome))) {
             return false;
         }
+        $pdo = Database::conexao();
+        $sql = "INSERT INTO beneficiario.categoria (vch_categoria) VALUES (:nome)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+        return $stmt->execute();
     }
 
-    /**
-     * Remove uma categoria pelo ID.
-     *
-     * @param int $id
-     * @return bool Verdadeiro se excluído com sucesso, falso caso contrário.
-     */
-    public function remover(int $id): bool
-    {
-        try {
-            $sql = "DELETE FROM beneficiario.categoria 
-                     WHERE id_categoria = :id";
+    // Exclui uma categoria (se não estiver em uso)
+    public function excluirCategoria($id) {
+        $pdo = Database::conexao();
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        // Verifica se algum beneficiário usa essa categoria
+        $sql = "SELECT COUNT(*) FROM beneficiario.beneficiario WHERE cod_categoria = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $qtd = $stmt->fetchColumn();
 
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("[Categoria::remover] Erro: " . $e->getMessage());
-            return false;
+        if ($qtd > 0) {
+            return false; // não pode excluir categoria em uso
         }
+
+        $sql = "DELETE FROM beneficiario.categoria WHERE cod_categoria = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }
