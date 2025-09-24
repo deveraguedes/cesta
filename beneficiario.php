@@ -105,6 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       border-radius: 10px;
     }
   </style>
+
+  <script src="js/beneficiario.js"></script>
 </head>
 
 <body>
@@ -127,13 +129,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       </div>
     </div>
 
+    <!-- Modal de Adicionar Beneficiário -->
+<div class="modal fade" id="modalBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiarioLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <!-- Conteúdo será carregado via AJAX -->
+    </div>
+  </div>
+</div>
+
     <!-- Conteúdo -->
     <div id="content">
       <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">Lista de Beneficiários</h2>
-          <a href="novo_beneficiario.php" class="btn btn-success" id="btnNovoBeneficiario">+ Novo Beneficiário</a>
-        </div>
+           <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modalBeneficiario">
+              + Adicionar Beneficiário
+</a>        </div>
 
         <table id="tabela" class="table table-striped table-bordered">
           <thead>
@@ -266,10 +278,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="js/beneficiario.js"></script>
   <script>
     $(document).ready(function() {
+      console.log('Inicializando DataTables e configurações...');
+      
       $('#tabela').DataTable({
         paging: false, // desabilita paginação do DataTables
         searching: true,

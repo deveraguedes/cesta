@@ -205,64 +205,60 @@ class Beneficiario
 
 
 
-public function inserirBeneficiario()
-{
+
+public function inserirBeneficiario() {
     try {
-        $pdo = Database::conexao();
         $this->dt_cadastro = date("Y-m-d");
 
-        // Se não foi setado por objeto, tenta pegar do POST
-        if ($this->cod_categoria === null && isset($_POST['cod_categoria']) && $_SESSION['int_nivel'] == 1) {
-            $this->cod_categoria = (int) $_POST['cod_categoria'];
+        $sql = "INSERT INTO beneficiario.beneficiario (
+            nis, cpf, nome, cod_bairro, localidade, cod_usuario, 
+            dt_cadastro, cod_unidade, cpf_responsavel, vch_responsavel,
+            cod_tipo, cep, endereco, complemento, telefone, situacao,
+            cod_categoria
+        ) VALUES (
+            :nis, :cpf, :nome, :cod_bairro, :localidade, :cod_usuario,
+            :dt_cadastro, :cod_unidade, :cpf_responsavel, :vch_responsavel,
+            :cod_tipo, :cep, :endereco, :complemento, :telefone, :situacao,
+            :cod_categoria
+        )";
+
+        $stmt = $this->db->prepare($sql);
+        
+        $stmt->bindValue(':nis', $this->nis ?: null);
+        $stmt->bindValue(':cpf', $this->cpf ?: null);
+        $stmt->bindValue(':nome', $this->nome);
+        $stmt->bindValue(':cod_bairro', $this->cod_bairro);
+        $stmt->bindValue(':localidade', $this->localidade);
+        $stmt->bindValue(':cod_usuario', $this->cod_usuario);
+        $stmt->bindValue(':dt_cadastro', $this->dt_cadastro);
+        $stmt->bindValue(':cod_unidade', $this->cod_unidade);
+        $stmt->bindValue(':cpf_responsavel', $this->cpf_responsavel);
+        $stmt->bindValue(':vch_responsavel', $this->vch_responsavel);
+        $stmt->bindValue(':cod_tipo', $this->cod_tipo);
+        $stmt->bindValue(':cep', $this->cep);
+        $stmt->bindValue(':endereco', $this->endereco);
+        $stmt->bindValue(':complemento', $this->complemento);
+        $stmt->bindValue(':telefone', $this->telefone);
+        $stmt->bindValue(':situacao', $this->situacao);
+        $stmt->bindValue(':cod_categoria', $this->cod_categoria ?: null);
+
+        if ($stmt->execute()) {
+            // Atualiza saldo da unidade
+            $sql_saldo = "UPDATE beneficiario.saldo_unidade 
+                         SET saldo = saldo - 1 
+                         WHERE cod_unidade = :cod_unidade";
+                         
+            $stmt_saldo = $this->db->prepare($sql_saldo);
+            $stmt_saldo->bindValue(':cod_unidade', $this->cod_unidade);
+            $stmt_saldo->execute();
+            
+            return true;
         }
-
-        $consulta = $pdo->prepare("INSERT INTO beneficiario.beneficiario
-            (nis, cpf, nome, cod_bairro, localidade, cod_usuario, dt_cadastro, cod_unidade, 
-             cpf_responsavel, vch_responsavel, cod_tipo, cep, endereco, complemento, telefone, situacao, cod_categoria) 
-        VALUES 
-            (:nis, :cpf, :nome, :cod_bairro, :localidade, :cod_usuario, :dt_cadastro, :cod_unidade, 
-             :cpf_responsavel, :vch_responsavel, :cod_tipo, :cep, :endereco, :complemento, :telefone, :situacao, :cod_categoria);");
-
-        if ($this->nis == "") {
-            $this->nis = null;
-        }
-
-        $consulta->bindParam(':nis', $this->nis);
-        $consulta->bindParam(':cpf', $this->cpf);
-        $consulta->bindParam(':nome', $this->nome);
-        $consulta->bindParam(':cod_bairro', $this->cod_bairro);
-        $consulta->bindParam(':localidade', $this->localidade);
-        $consulta->bindParam(':cod_usuario', $this->cod_usuario);
-        $consulta->bindParam(':dt_cadastro', $this->dt_cadastro);
-        $consulta->bindParam(':cod_unidade', $this->cod_unidade);
-        $consulta->bindParam(':cpf_responsavel', $this->cpf_responsavel);
-        $consulta->bindParam(':vch_responsavel', $this->vch_responsavel);
-        $consulta->bindParam(':cod_tipo', $this->cod_tipo);
-        $consulta->bindParam(':cep', $this->cep);
-        $consulta->bindParam(':endereco', $this->endereco);
-        $consulta->bindParam(':complemento', $this->complemento);
-        $consulta->bindParam(':telefone', $this->telefone);
-        $consulta->bindParam(':situacao', $this->situacao);
-
-        // sempre manda cod_categoria (null ou int)
-        if ($this->cod_categoria !== null) {
-            $consulta->bindParam(':cod_categoria', $this->cod_categoria, PDO::PARAM_INT);
-        } else {
-            $consulta->bindValue(':cod_categoria', null, PDO::PARAM_NULL);
-        }
-
-        $consulta->execute();
-
-        // Atualiza saldo
-        $consulta_saldo = $pdo->prepare("UPDATE beneficiario.saldo_unidade 
-                                         SET saldo = saldo - 1 
-                                         WHERE cod_unidade = :cod_unidade;");
-        $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
-        $consulta_saldo->execute();
-
-        header('Location: ../beneficiario.php');
+        
+        return false;
     } catch (PDOException $e) {
-        echo "Ocorreu um erro: " . $e->getMessage();
+        error_log("[Beneficiario::inserirBeneficiario] Erro: " . $e->getMessage());
+        throw new Exception("Erro ao inserir beneficiário");
     }
 }
 

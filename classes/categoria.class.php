@@ -87,4 +87,22 @@ class Categoria {
 
         return true;
     }
+    public function buscarPorId($id) {
+    if (!$id) return null;
+    
+    try {
+        $sql = "SELECT cod_categoria, vch_categoria 
+                  FROM beneficiario.categoria 
+                 WHERE cod_categoria = :id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("[Categoria::buscarPorId] Erro: " . $e->getMessage());
+        return null;
+    }
+}
 }
