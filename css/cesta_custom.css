@@ -192,3 +192,41 @@ p,
 .form-control {
   font-size: 18px;
 }
+
+/* ===== Scrollbar Styling ===== */
+
+/* For WebKit browsers (Chrome, Edge, Safari, Opera) */
+::-webkit-scrollbar {
+  width: 18px;              /* thicker for easier grabbing */
+  height: 18px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;       /* light track for contrast */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--wine-bright);
+  border-radius: 10px;
+  border: 3px solid #f1f1f1; /* adds padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--wine-base);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--wine-dark);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: auto;              /* "auto" = thicker than thin */
+  scrollbar-color: var(--wine-bright) #f1f1f1;
+}
+
+/* For IE/Edge Legacy (fallback) */
+body {
+  -ms-overflow-style: scrollbar;
+}

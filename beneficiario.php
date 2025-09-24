@@ -30,8 +30,8 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
 // Se for nível 2, carrega categorias predefinidas
 if ($int_nivel == 2) {
-    $c = new Categoria();
-    $categorias = $c->listarCategorias();
+  $c = new Categoria();
+  $categorias = $c->listarCategorias();
 }
 ?>
 
@@ -42,13 +42,14 @@ if ($int_nivel == 2) {
   <meta charset="utf-8">
   <title>Lista de Beneficiários</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="css/cesta_custom.css">
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #800020;
       /* fundo vinho */
     }
+
     #sidebar {
       min-height: 100vh;
       background-color: #4b0010;
@@ -76,12 +77,12 @@ if ($int_nivel == 2) {
       margin: 20px;
     }
 
-    table.dataTable {
+    table {
       border-radius: 12px;
       overflow: hidden;
     }
 
-    table.dataTable th {
+    table th {
       background-color: #f1f1f1;
     }
 
@@ -92,7 +93,6 @@ if ($int_nivel == 2) {
 </head>
 
 <body>
-
   <div class="d-flex">
     <!-- Sidebar -->
     <div id="sidebar" class="p-3">
@@ -115,90 +115,142 @@ if ($int_nivel == 2) {
       </div>
     </div>
 
-  <!-- Conteúdo -->
-  <div id="content">
-    <div class="container-fluid">
-      <h2 class="mb-4">Lista de Beneficiários</h2>
+    <!-- Conteúdo -->
+    <div id="content">
+      <div class="container-fluid">
+        <h2 class="mb-4">Lista de Beneficiários</h2>
 
-      <table id="tabela" class="table table-striped table-bordered">
-        <thead>
-          <tr>
-            <th>NIS</th>
-            <th>CPF</th>
-            <th>Nome</th>
-            <th>Bairro</th>
-            <th>Localidade</th>
-            <th>Endereço</th>
-            <th>Tipo de Beneficiário</th>
-            <?php if ($int_nivel == 2): ?>
-              <th>Categoria</th>
-            <?php endif; ?>
-            <th>Situação</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($beneficiarios['data'] as $row) { ?>
+        <table id="tabela" class="table table-striped table-bordered">
+          <thead>
             <tr>
-              <td><?= htmlspecialchars($row["nis"]); ?></td>
-              <td><?= htmlspecialchars($row["cpf"]); ?></td>
-              <td><?= htmlspecialchars($row["nome"]); ?></td>
-              <td><?= htmlspecialchars($row["vch_bairro"]); ?></td>
-              <td><?= htmlspecialchars($row["localidade"]); ?></td>
-              <td><?= htmlspecialchars($row["endereco"]); ?></td>
-              <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
-
+              <th>NIS</th>
+              <th>CPF</th>
+              <th>Nome</th>
+              <th>Bairro</th>
+              <th>Localidade</th>
+              <th>Endereço</th>
+              <th>Tipo de Beneficiário</th>
               <?php if ($int_nivel == 2): ?>
-                <td>
-                  <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
-                  <a href="forms/atribuir_categoria.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>" 
-                     class="btn btn-sm btn-warning mt-1">Definir</a>
-                </td>
+                <th>Categoria</th>
               <?php endif; ?>
-
-              <td>
-                <?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?>
-              </td>
-              <td>
-                <!-- Botão Alterar -->
-                <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" 
-                   class="btn btn-sm btn-primary mb-1">
-                   Alterar
-                </a>
-
-                <!-- Botões Inserir / Remover -->
-                <?php if ($row["situacao"] == 1) { ?>
-                  <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" 
-                     class="btn btn-sm btn-danger mb-1">
-                     Remover da Cesta
-                  </a>
-                <?php } else { ?>
-                  <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" 
-                     class="btn btn-sm btn-success mb-1">
-                     Inserir na Cesta
-                  </a>
-                <?php } ?>
-              </td>
+              <th>Situação</th>
+              <th>Ações</th>
             </tr>
-          <?php } ?>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <?php foreach ($beneficiarios['data'] as $row) { ?>
+              <tr>
+                <td><?= htmlspecialchars($row["nis"]); ?></td>
+                <td><?= htmlspecialchars($row["cpf"]); ?></td>
+                <td><?= htmlspecialchars($row["nome"]); ?></td>
+                <td><?= htmlspecialchars($row["vch_bairro"]); ?></td>
+                <td><?= htmlspecialchars($row["localidade"]); ?></td>
+                <td><?= htmlspecialchars($row["endereco"]); ?></td>
+                <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
+
+                <?php if ($int_nivel == 2): ?>
+                  <td>
+                    <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
+                    <a href="forms/atribuir_categoria.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>"
+                      class="btn btn-sm btn-warning mt-1">Definir</a>
+                  </td>
+                <?php endif; ?>
+
+                <td>
+                  <?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?>
+                </td>
+                <td>
+                  <!-- Botão Alterar -->
+                  <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>"
+                    class="btn btn-sm btn-primary mb-1">
+                    Alterar
+                  </a>
+
+                  <!-- Botões Inserir / Remover -->
+                  <?php if ($row["situacao"] == 1) { ?>
+                    <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>"
+                      class="btn btn-sm btn-danger mb-1">
+                      Remover da Cesta
+                    </a>
+                  <?php } else { ?>
+                    <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>"
+                      class="btn btn-sm btn-success mb-1">
+                      Inserir na Cesta
+                    </a>
+                  <?php } ?>
+                </td>
+              </tr>
+            <?php } ?>
+          </tbody>
+        </table>
+
+        <!-- Server-side Pagination -->
+        <?php
+        $totalPages = ceil($beneficiarios['total'] / $perPage);
+        if ($totalPages > 1):
+          $current = $page;   // página atual
+          $range   = 2;       // quantas páginas mostrar ao redor
+        ?>
+          <nav class="center-vertical" aria-label="Page navigation" style="padding-top: 0px;">
+            <ul class="pagination justify-content-center color">
+              <!-- Primeira -->
+              <li class="page-item <?= $current == 1 ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=1">Primeira</a>
+              </li>
+              <!-- Anterior -->
+              <li class="page-item <?= $current == 1 ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=<?= $current - 1 ?>">Anterior</a>
+              </li>
+
+              <!-- Números de página -->
+              <?php
+              $start = max(1, $current - $range);
+              $end   = min($totalPages, $current + $range);
+
+              if ($start > 1) {
+                echo '<li class="page-item color disabled"><span class="page-link">…</span></li>';
+              }
+
+              for ($p = $start; $p <= $end; $p++): ?>
+                <li class="page-item <?= $p == $current ? 'active' : '' ?>">
+                  <a class="page-link color" href="?page=<?= $p ?>"><?= $p ?></a>
+                </li>
+              <?php endfor;
+
+              if ($end < $totalPages) {
+                echo '<li class="page-item color disabled"><span class="page-link">…</span></li>';
+              }
+              ?>
+
+              <!-- Próxima -->
+              <li class="page-item <?= $current == $totalPages ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=<?= $current + 1 ?>">Próxima</a>
+              </li>
+              <!-- Última -->
+              <li class="page-item <?= $current == $totalPages ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=<?= $totalPages ?>">Última</a>
+              </li>
+            </ul>
+          </nav>
+        <?php endif; ?>
+      </div>
     </div>
   </div>
-</div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
     $(document).ready(function() {
       $('#tabela').DataTable({
+        paging: false, // disable DataTables paging
+        searching: true,
+        ordering: true,
         language: {
           url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
-        },
-        pageLength: 25,
-        order: [[2, 'asc']]
+        }
       });
     });
   </script>
 </body>
+
 </html>
