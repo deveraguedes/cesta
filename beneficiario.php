@@ -53,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="utf-8">
   <title>Lista de Beneficiários</title>
@@ -70,14 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       color: #fff;
       border-radius: 0 15px 15px 0;
     }
+
     #sidebar .nav-link {
       color: #fff;
       transition: 0.3s;
     }
+
     #sidebar .nav-link:hover {
       background-color: #a8324a;
       border-radius: 8px;
     }
+
     #content {
       padding: 20px;
       background: #fff;
@@ -86,18 +90,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       margin: 20px;
     }
-    table.dataTable {
+
+    table {
       border-radius: 12px;
       overflow: hidden;
     }
-    table.dataTable th {
+
+    table th {
       background-color: #f1f1f1;
     }
+
     .btn {
       border-radius: 10px;
     }
   </style>
 </head>
+
 <body>
   <div class="d-flex">
     <!-- Sidebar -->
@@ -123,10 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">Lista de Beneficiários</h2>
-          <!-- Botão corrigido -->
-          <a href="novo_beneficiario.php" class="btn btn-success" id="btnNovoBeneficiario">
-  + Novo Beneficiário
-</a>
+          <a href="novo_beneficiario.php" class="btn btn-success" id="btnNovoBeneficiario">+ Novo Beneficiário</a>
         </div>
 
         <table id="tabela" class="table table-striped table-bordered">
@@ -154,19 +159,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 <td><?= htmlspecialchars($row["localidade"]); ?></td>
                 <td><?= htmlspecialchars($row["endereco"]); ?></td>
                 <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
-
                 <?php if ($int_nivel == 1): ?>
                   <td>
                     <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
                     <a href="#" class="btn btn-sm btn-warning mt-1"
-                       data-toggle="modal"
-                       data-target="#modalCategoria"
-                       data-id="<?= $row['cod_beneficiario']; ?>">
-                       Definir
+                      data-toggle="modal"
+                      data-target="#modalCategoria"
+                      data-id="<?= $row['cod_beneficiario']; ?>">
+                      Definir
                     </a>
                   </td>
                 <?php endif; ?>
-
                 <td><?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?></td>
                 <td>
                   <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-primary mb-1">Alterar</a>
@@ -180,6 +183,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             <?php endforeach; ?>
           </tbody>
         </table>
+
+        <!-- Paginação estilo avançado -->
+        <?php
+        $totalPages = ceil($beneficiarios['total'] / $perPage);
+        if ($totalPages > 1):
+          $current = $page;
+          $range   = 2;
+        ?>
+          <nav class="center-vertical" aria-label="Page navigation" style="padding-top: 0px;">
+            <ul class="pagination justify-content-center color">
+              <li class="page-item <?= $current == 1 ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=1">Primeira</a>
+              </li>
+              <li class="page-item <?= $current == 1 ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=<?= $current - 1 ?>">Anterior</a>
+              </li>
+              <?php
+              $start = max(1, $current - $range);
+              $end   = min($totalPages, $current + $range);
+
+              if ($start > 1) {
+                echo '<li class="page-item color disabled"><span class="page-link">…</span></li>';
+              }
+
+              for ($p = $start; $p <= $end; $p++): ?>
+                <li class="page-item <?= $p == $current ? 'active' : '' ?>">
+                  <a class="page-link color" href="?page=<?= $p ?>"><?= $p ?></a>
+                </li>
+              <?php endfor;
+
+              if ($end < $totalPages) {
+                echo '<li class="page-item color disabled"><span class="page-link">…</span></li>';
+              }
+              ?>
+
+              <li class="page-item <?= $current == $totalPages ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=<?= $current + 1 ?>">Próxima</a>
+              </li>
+              <li class="page-item <?= $current == $totalPages ? 'disabled' : '' ?>">
+                <a class="page-link color" href="?page=<?= $totalPages ?>">Última</a>
+              </li>
+            </ul>
+          </nav>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -216,18 +263,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     $(document).ready(function() {
       $('#tabela').DataTable({
-        language: { url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json" },
-        pageLength: 25,
-        order: [[2, 'asc']]
+        paging: false, // desabilita paginação do DataTables
+        searching: true,
+        ordering: true,
+        language: {
+          url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
+        }
       });
 
-      $('#modalCategoria').on('show.bs.modal', function (event) {
+      $('#modalCategoria').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var codBeneficiario = button.data('id');
         $('#cod_beneficiario').val(codBeneficiario);
