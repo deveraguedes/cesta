@@ -4,6 +4,11 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 include_once "../classes/beneficiario.class.php";
 
+if (!isset($_SESSION['user_id'])) {
+  header('Location: ../usuarios/login.php'); // Redireciona para a página de login se não estiver logado
+  exit;
+}
+
 $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
