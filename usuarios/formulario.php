@@ -107,6 +107,8 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
       /* empurra o conteúdo pra direita */
     }
   </style>
+
+  <title>Cadastro de Usuário</title>
 </head>
 
 <body>
@@ -131,7 +133,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
               <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
             </li>
             <li class="nav-item">
-              <a href="/cesta/relatorio.php" class="nav-link">Relatórios</a>
+              <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
           </ul>
         </div>

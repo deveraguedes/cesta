@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
         <ul class="nav flex-column">
           <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
           <li class="nav-item"><a href="beneficiario.php" class="nav-link">Beneficiários</a></li>
-          <li class="nav-item"><a href="relatorio.php" class="nav-link">Relatórios</a></li>
+          <li class="nav-item"><a href="relatorios/relat.php" class="nav-link">Relatórios</a></li>
           <?php if ($int_nivel == 1): ?>
             <li class="nav-item"><a href="categorias.php" class="nav-link">Categorias</a></li>
           <?php endif; ?>
