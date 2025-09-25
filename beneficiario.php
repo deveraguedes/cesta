@@ -126,29 +126,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
           <?php endif; ?>
           <?php if ($int_nivel == 1): ?>
-            <li class="nav-item"><a href="processamento/inport_tab_pagamento.php" class="nav-link">Importar folha de pagamento</a></li>
+            <li class="nav-item">
+              <form action="processamento/inport_tab_pagamento.php" method="post" enctype="multipart/form-data" style="display:inline;">
+                <label class="nav-link mb-0" style="cursor:pointer;">
+                  Importar folha de pagamento
+                  <input type="file" name="csvfile" accept=".csv" style="display:none;" onchange="this.form.submit()">
+                </label>
+              </form>
+            </li>
           <?php endif; ?>
         </ul>
       </div>
     </div>
 
     <!-- Modal de Adicionar Beneficiário -->
-<div class="modal fade" id="modalBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiarioLabel">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <!-- Conteúdo será carregado via AJAX -->
+    <div class="modal fade" id="modalBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiarioLabel">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <!-- Conteúdo será carregado via AJAX -->
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- Conteúdo -->
     <div id="content">
       <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">Lista de Beneficiários</h2>
-           <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modalBeneficiario">
-              + Adicionar Beneficiário
-</a>        </div>
+          <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modalBeneficiario">
+            + Adicionar Beneficiário
+          </a>
+        </div>
 
         <table id="tabela" class="table table-striped table-bordered">
           <thead>
@@ -287,7 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
   <script>
     $(document).ready(function() {
       console.log('Inicializando DataTables e configurações...');
-      
+
       $('#tabela').DataTable({
         paging: false, // desabilita paginação do DataTables
         searching: true,

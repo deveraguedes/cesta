@@ -156,7 +156,14 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
               <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="processamento/inport_tab_pagamento.php" class="nav-link">Importar folha de pagamento</a></li>
+              <li class="nav-item">
+                <form action="processamento/inport_tab_pagamento.php" method="post" enctype="multipart/form-data" style="display:inline;">
+                  <label class="nav-link mb-0" style="cursor:pointer;">
+                    Importar folha de pagamento
+                    <input type="file" name="csvfile" accept=".csv" style="display:none;" onchange="this.form.submit()">
+                  </label>
+                </form>
+              </li>
             <?php endif; ?>
           </ul>
         </div>
