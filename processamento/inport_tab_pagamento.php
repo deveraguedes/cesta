@@ -27,36 +27,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvfile'])) {
             // pula cabeçalho
             fgetcsv($handle, 0, ";");
 
-            // prepara INSERT
+            // prepara INSERT com ON CONFLICT (cpf, periodo) DO NOTHING
             $sqlInsert = "INSERT INTO beneficiario.folha 
                             (cod_familiar, cpf, nis, nome, endereco, bairro, cep, tel1, tel2, periodo)
                           VALUES 
-                            (:cod_familiar, :cpf, :nis, :nome, :endereco, :bairro, :cep, :tel1, :tel2, :periodo)";
+                            (:cod_familiar, :cpf, :nis, :nome, :endereco, :bairro, :cep, :tel1, :tel2, :periodo)
+                          ON CONFLICT (cpf, periodo) DO NOTHING";
             $stmtInsert = $pdo->prepare($sqlInsert);
-
-            // prepara SELECT para checar duplicados
-            $sqlCheck = "SELECT 1 FROM beneficiario.folha WHERE cpf = :cpf AND periodo = :periodo LIMIT 1";
-            $stmtCheck = $pdo->prepare($sqlCheck);
 
             $periodo = date("m/Y");
             $inseridos = 0;
-            $duplicados = 0;
+            $linhas = 0;
+
+            // inicia transação para acelerar
+            $pdo->beginTransaction();
 
             while (($data = fgetcsv($handle, 0, ";")) !== false) {
+                $linhas++;
                 $cpf = preg_replace('/\D/', '', $data[1]);
 
-                // checa se já existe esse CPF no mesmo período
-                $stmtCheck->execute([
-                    ':cpf' => $cpf,
-                    ':periodo' => $periodo
-                ]);
-
-                if ($stmtCheck->fetch()) {
-                    $duplicados++;
-                    continue; // pula duplicado
-                }
-
-                // insere se não existir
                 $stmtInsert->execute([
                     ':cod_familiar' => trim($data[0]),
                     ':cpf'          => $cpf,
@@ -69,10 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvfile'])) {
                     ':tel2'         => trim($data[9]),
                     ':periodo'      => $periodo
                 ]);
-                $inseridos++;
+
+                // conta apenas os realmente inseridos
+                if ($stmtInsert->rowCount() > 0) {
+                    $inseridos++;
+                }
             }
+
+            $pdo->commit();
             fclose($handle);
 
+            $duplicados = $linhas - $inseridos;
             $_SESSION['import_msg'] = "Importação concluída: $inseridos inseridos, $duplicados duplicados ignorados.";
         }
     }
