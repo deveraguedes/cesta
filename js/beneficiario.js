@@ -10,62 +10,47 @@ function somenteNumeros(e) {
 }
 
 function verificarCPF(cpf) {
-    cpf = cpf.replace(/[^\d]/g, '');
+    if (!cpf) return true; 
     
+    cpf = cpf.replace(/[^\d]/g, '');
+
     if (cpf.length != 11 || /^(\d)\1{10}$/.test(cpf)) {
-        alert("CPF inválido!");
-        document.getElementById("cpf").value = "";
-        document.getElementById("cpf").focus();
         return false;
     }
 
     let sum = 0;
-    let rest;
-
     for (let i = 1; i <= 9; i++) {
-        sum = sum + parseInt(cpf.substring(i-1, i)) * (11 - i);
+        sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
     }
-
-    rest = (sum * 10) % 11;
-    if ((rest == 10) || (rest == 11)) rest = 0;
+    
+    let rest = (sum * 10) % 11;
+    if (rest == 10 || rest == 11) rest = 0;
     if (rest != parseInt(cpf.substring(9, 10))) {
-        alert("CPF inválido!");
-        document.getElementById("cpf").value = "";
-        document.getElementById("cpf").focus();
         return false;
     }
 
     sum = 0;
     for (let i = 1; i <= 10; i++) {
-        sum = sum + parseInt(cpf.substring(i-1, i)) * (12 - i);
+        sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
     }
-
+    
     rest = (sum * 10) % 11;
-    if ((rest == 10) || (rest == 11)) rest = 0;
+    if (rest == 10 || rest == 11) rest = 0;
     if (rest != parseInt(cpf.substring(10, 11))) {
-        alert("CPF inválido!");
-        document.getElementById("cpf").value = "";
-        document.getElementById("cpf").focus();
         return false;
     }
 
     return true;
 }
 
-function verificarCPFNIS(valor) {
-    if (valor.length > 0) {
-        let isNIS = document.getElementById("nis").value.length > 0;
-        let isCPF = document.getElementById("cpf").value.length > 0;
-        
-        if (isNIS && isCPF) {
-            alert("Preencha apenas NIS ou CPF, não ambos!");
-            if (isNIS) {
-                document.getElementById("cpf").value = "";
-            } else {
-                document.getElementById("nis").value = "";
-            }
-            return false;
-        }
+function verificarCPFNIS() {
+    let nis = document.getElementById("nis").value.trim();
+    let cpf = document.getElementById("cpf").value.trim();
+    
+    if (nis && cpf) {
+        alert("Preencha apenas NIS ou CPF, não ambos!");
+        document.getElementById("cpf").value = "";
+        return false;
     }
     return true;
 }
@@ -75,6 +60,14 @@ function verifica() {
     if (!document.getElementById("nis").value && !document.getElementById("cpf").value) {
         alert("NIS ou CPF deve ser informado!");
         document.getElementById("nis").focus();
+        return false;
+    }
+
+    // Valida CPF antes de enviar
+    let cpf = document.getElementById("cpf").value;
+    if (cpf && !verificarCPF(cpf)) {
+        alert("CPF inválido!");
+        document.getElementById("cpf").focus();
         return false;
     }
 
@@ -117,10 +110,23 @@ function verifica() {
     return false;
 }
 
-// Configuração do modal
+// Configuração do modal e eventos
 $(document).ready(function() {
     console.log('Script inicializado');
 
+    // Eventos de validação ao sair do campo
+    $('#cpf').on('blur', function() {
+        if (this.value && !verificarCPF(this.value)) {
+            alert("CPF inválido!");
+            this.focus();
+        }
+    });
+
+    $('#nis').on('blur', function() {
+        verificarCPFNIS();
+    });
+
+    // Modal
     $('#modalBeneficiario').on('show.bs.modal', function (e) {
         console.log('Modal está abrindo');
         var modal = $(this);

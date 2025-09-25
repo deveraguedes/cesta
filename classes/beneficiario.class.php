@@ -187,11 +187,15 @@ class Beneficiario
     {
         return $this->cod_tipo;
     }
-    public function setCategoria(Categoria $categoria)
-    {
-    $this->categoria = $categoria;
-    $this->cod_categoria = $categoria->getCodCategoria();
+    public function setCategoria($categoria) {
+    if (is_array($categoria)) {
+        $this->cod_categoria = $categoria['cod_categoria'] ?? null;
+    } elseif ($categoria instanceof Categoria) {
+        $this->cod_categoria = $categoria->getId(); // supondo que tenha getId()
+    } else {
+        $this->cod_categoria = null;
     }
+}
 
     public function getCategoria()
     {
@@ -208,29 +212,37 @@ class Beneficiario
 
 public function inserirBeneficiario() {
     try {
-        $this->dt_cadastro = date("Y-m-d");
+        //  Validação básica
+        if (empty($this->nome)) {
+            throw new Exception("O campo 'nome' é obrigatório.");
+        }
+        if (empty($this->cod_bairro)) {
+            throw new Exception("O campo 'bairro' é obrigatório.");
+        }
+        if (empty($this->cod_tipo)) {
+            throw new Exception("O campo 'tipo' é obrigatório.");
+        }
 
-        $sql = "INSERT INTO beneficiario.beneficiario (
-            nis, cpf, nome, cod_bairro, localidade, cod_usuario, 
-            dt_cadastro, cod_unidade, cpf_responsavel, vch_responsavel,
-            cod_tipo, cep, endereco, complemento, telefone, situacao,
-            cod_categoria
-        ) VALUES (
-            :nis, :cpf, :nome, :cod_bairro, :localidade, :cod_usuario,
-            :dt_cadastro, :cod_unidade, :cpf_responsavel, :vch_responsavel,
-            :cod_tipo, :cep, :endereco, :complemento, :telefone, :situacao,
-            :cod_categoria
-        )";
-
-        $stmt = $this->db->prepare($sql);
+        // Query de inserção
+        $sql = "INSERT INTO beneficiario.beneficiario 
+                (nis, cpf, nome, cod_bairro, localidade, cod_usuario, dt_cadastro, 
+                 cod_unidade, cpf_responsavel, vch_responsavel, cod_tipo, cep, 
+                 endereco, complemento, telefone, situacao, cod_categoria)
+                VALUES 
+                (:nis, :cpf, :nome, :cod_bairro, :localidade, :cod_usuario, :dt_cadastro,
+                 :cod_unidade, :cpf_responsavel, :vch_responsavel, :cod_tipo, :cep, 
+                 :endereco, :complemento, :telefone, :situacao, :cod_categoria)";
         
-        $stmt->bindValue(':nis', $this->nis ?: null);
-        $stmt->bindValue(':cpf', $this->cpf ?: null);
+        $stmt = $this->db->prepare($sql);
+
+        // ✅  Bind dos parâmetros
+        $stmt->bindValue(':nis', $this->nis);
+        $stmt->bindValue(':cpf', $this->cpf);
         $stmt->bindValue(':nome', $this->nome);
         $stmt->bindValue(':cod_bairro', $this->cod_bairro);
         $stmt->bindValue(':localidade', $this->localidade);
         $stmt->bindValue(':cod_usuario', $this->cod_usuario);
-        $stmt->bindValue(':dt_cadastro', $this->dt_cadastro);
+        $stmt->bindValue(':dt_cadastro', $this->dt_cadastro ?? date('Y-m-d H:i:s'));
         $stmt->bindValue(':cod_unidade', $this->cod_unidade);
         $stmt->bindValue(':cpf_responsavel', $this->cpf_responsavel);
         $stmt->bindValue(':vch_responsavel', $this->vch_responsavel);
@@ -239,29 +251,56 @@ public function inserirBeneficiario() {
         $stmt->bindValue(':endereco', $this->endereco);
         $stmt->bindValue(':complemento', $this->complemento);
         $stmt->bindValue(':telefone', $this->telefone);
-        $stmt->bindValue(':situacao', $this->situacao);
-        $stmt->bindValue(':cod_categoria', $this->cod_categoria ?: null);
+        $stmt->bindValue(':situacao', $this->situacao ?? 1);
+        $stmt->bindValue(':cod_categoria', $this->cod_categoria);
 
-        if ($stmt->execute()) {
-            // Atualiza saldo da unidade
-            $sql_saldo = "UPDATE beneficiario.saldo_unidade 
-                         SET saldo = saldo - 1 
-                         WHERE cod_unidade = :cod_unidade";
-                         
-            $stmt_saldo = $this->db->prepare($sql_saldo);
-            $stmt_saldo->bindValue(':cod_unidade', $this->cod_unidade);
-            $stmt_saldo->execute();
-            
-            return true;
+        // 
+        error_log("[Beneficiario::inserirBeneficiario] Dados: " . json_encode([
+            'nis' => $this->nis,
+            'cpf' => $this->cpf,
+            'nome' => $this->nome,
+            'cod_bairro' => $this->cod_bairro,
+            'localidade' => $this->localidade,
+            'cod_usuario' => $this->cod_usuario,
+            'dt_cadastro' => $this->dt_cadastro,
+            'cod_unidade' => $this->cod_unidade,
+            'cpf_responsavel' => $this->cpf_responsavel,
+            'vch_responsavel' => $this->vch_responsavel,
+            'cod_tipo' => $this->cod_tipo,
+            'cep' => $this->cep,
+            'endereco' => $this->endereco,
+            'complemento' => $this->complemento,
+            'telefone' => $this->telefone,
+            'situacao' => $this->situacao,
+            'cod_categoria' => $this->cod_categoria,
+        ]));
+
+        //  Executar inserção
+        if (!$stmt->execute()) {
+            $errorInfo = $stmt->errorInfo();
+            throw new Exception("Falha ao inserir beneficiário. Erro PDO: " . $errorInfo[2]);
         }
-        
-        return false;
+
+        // . Atualizar saldo da unidade (se informado)
+        if (!empty($this->cod_unidade)) {
+            $sqlSaldo = "UPDATE saldo SET saldo = saldo + 1 WHERE cod_unidade = :cod_unidade";
+            $stmtSaldo = $this->con->prepare($sqlSaldo);
+            $stmtSaldo->bindValue(':cod_unidade', $this->cod_unidade);
+
+            if (!$stmtSaldo->execute()) {
+                $errorInfo = $stmtSaldo->errorInfo();
+                throw new Exception("Beneficiário inserido, mas erro ao atualizar saldo: " . $errorInfo[2]);
+            }
+        }
+
+        return true;
+
     } catch (PDOException $e) {
-        error_log("[Beneficiario::inserirBeneficiario] Erro: " . $e->getMessage());
-        throw new Exception("Erro ao inserir beneficiário");
+        throw new Exception("Erro PDO ao inserir beneficiário: " . $e->getMessage());
+    } catch (Exception $e) {
+        throw $e; // repassa para ser tratado no processar_beneficiario.php
     }
 }
-
     public function alterarBeneficiario(array $dados, int $nivelUsuario): bool
     {
         try {
@@ -911,4 +950,5 @@ public function exibirBeneficiario(int $cod_unidade, int $int_nivel, int $page =
         }
         return $consulta;
     }
+    
 }
