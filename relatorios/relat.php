@@ -152,9 +152,12 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
             <li class="nav-item">
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
-            <li class="nav-item">
-              <a href="/cesta/categoria.php" class="nav-link active">Categorias</a>
-            </li>
+            <?php if ($int_nivel == 1): ?>
+              <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
+            <?php endif; ?>
+            <?php if ($int_nivel == 1): ?>
+              <li class="nav-item"><a href="processamento/inport_tab_pagamento.php" class="nav-link">Importar tabela de Categorias</a></li>
+            <?php endif; ?>
           </ul>
         </div>
       </div>

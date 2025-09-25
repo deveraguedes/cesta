@@ -125,6 +125,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           <?php if ($int_nivel == 1): ?>
             <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
           <?php endif; ?>
+          <?php if ($int_nivel == 1): ?>
+            <li class="nav-item"><a href="processamento/inport_tab_pagamento.php" class="nav-link">Importar tabela de Categorias</a></li>
+          <?php endif; ?>
         </ul>
       </div>
     </div>
