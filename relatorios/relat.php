@@ -185,8 +185,8 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
             <table class="table table-bordered table-hover" id="dataTable">
               <thead class="thead-dark">
                 <tr>
-                  <th>CPF</th>
                   <th>NIS</th>
+                  <th>CPF</th>
                   <th>NOME</th>
                   <th>UNIDADE</th>
                   <th>SITUAÇÃO</th>
@@ -195,8 +195,8 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
               <tbody>
                 <?php foreach ($result['data'] as $row): ?>
                   <tr>
-                    <td><?= htmlspecialchars(formatarCPF($row['cpf'])) ?></td>
                     <td><?= htmlspecialchars($row['nis']) ?></td>
+                    <td><?= htmlspecialchars(formatarCPF($row['cpf'])) ?></td>
                     <td><?= htmlspecialchars($row['nome']) ?></td>
                     <td><?= htmlspecialchars($row['vch_bairro']) ?></td>
                     <td>
