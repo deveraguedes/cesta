@@ -156,7 +156,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
               <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="processamento/inport_tab_pagamento.php" class="nav-link">Importar tabela de Categorias</a></li>
+              <li class="nav-item"><a href="processamento/inport_tab_pagamento.php" class="nav-link">Importar folha de pagamento</a></li>
             <?php endif; ?>
           </ul>
         </div>
