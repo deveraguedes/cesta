@@ -230,3 +230,21 @@ p,
 body {
   -ms-overflow-style: scrollbar;
 }
+
+/* Inline validation helpers inside modals */
+.modal .is-invalid {
+  border-color: #dc3545 !important; /* Bootstrap danger color */
+  box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.15) !important;
+}
+
+.modal .invalid-feedback {
+  display: block; /* ensure visibility inside modal */
+  color: #dc3545;
+  margin-top: 0.25rem;
+  font-size: 0.95em;
+}
+
+/* If inputs are placed in input-group, make feedback visible below */
+.modal .input-group + .invalid-feedback {
+  display: block;
+}

@@ -24,6 +24,10 @@ $perPage = 50;
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
 
+// Provide data for the modal form (types and neighborhoods)
+$tipos = $b->exibirTipo();
+$bairros = $b->exibirBairro();
+
 $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
@@ -106,7 +110,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
     }
   </style>
 
-  <script src="js/beneficiario.js"></script>
+  <!-- Global numeric-only helper for inline onkeypress handlers -->
+  <script>
+    function somenteNumeros(e) {
+      const charCode = e.charCode ? e.charCode : e.keyCode;
+      if (charCode !== 8 && charCode !== 9) {
+        if (charCode < 48 || charCode > 57) return false;
+      }
+      return true;
+    }
+  </script>
 </head>
 
 <body>
@@ -143,7 +156,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
     <div class="modal fade" id="modalBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiarioLabel">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-          <!-- Conteúdo será carregado via AJAX -->
+          <div class="modal-header">
+            <h4 class="modal-title">Inserir Beneficiário</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <!-- ALERTA DINÂMICO -->
+            <div id="alertBeneficiario" class="alert d-none"></div>
+
+            <form id="formBeneficiario" name="form" method="POST" action="processamento/processar_beneficiario.php" data-toggle="validator" role="form">
+              <input type="hidden" id="cod_usuario" name="cod_usuario" value="<?php echo htmlspecialchars($cod_usuario); ?>">
+              <input type="hidden" id="cod_unidade" name="cod_unidade" value="<?php echo htmlspecialchars($cod_unidade); ?>">
+
+              <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label for="nis">NIS</label>
+                <input type="text" id="nis" name="nis" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" class="form-control" name="nome" required>
+              </div>
+
+              <div class="form-group">
+                <label for="cod_bairro">Bairro</label>
+                <select name="cod_bairro" id="cod_bairro" class="form-control" required>
+                  <option value="">Selecione o bairro</option>
+                  <?php while ($bairro = $bairros->fetch(PDO::FETCH_ASSOC)): ?>
+                    <option value="<?= $bairro['cod_bairro'] ?>"><?= htmlspecialchars($bairro['vch_bairro']) ?></option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="endereco">Endereço</label>
+                <input type="text" id="endereco" class="form-control" name="endereco" required>
+              </div>
+
+              <div class="form-group">
+                <label for="complemento">Complemento</label>
+                <input type="text" id="complemento" class="form-control" name="complemento">
+              </div>
+
+              <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" class="form-control" name="telefone">
+              </div>
+
+              <div class="form-group">
+                <label for="cod_tipo">Tipo de Beneficiário</label>
+                <select name="cod_tipo" id="cod_tipo" class="form-control" required>
+                  <option value="">Selecione o tipo</option>
+                  <?php while ($tipo = $tipos->fetch(PDO::FETCH_ASSOC)): ?>
+                    <option value="<?= $tipo['cod_tipo'] ?>">
+                      <?= htmlspecialchars($tipo['vch_tipo']) ?>
+                    </option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+
+              <?php if ($_SESSION['int_level'] == 1): ?>
+                <div class="form-group">
+                  <label for="cod_categoria">Categoria</label>
+                  <select name="cod_categoria" id="cod_categoria" class="form-control">
+                    <option value="">Selecione a categoria</option>
+                    <?php
+                    $c = new Categoria();
+                    $categorias = $c->listarCategorias();
+                    foreach ($categorias as $cat):
+                    ?>
+                      <option value="<?= $cat['cod_categoria'] ?>">
+                        <?= htmlspecialchars($cat['vch_categoria']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              <?php endif; ?>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -292,24 +392,253 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="js/beneficiario.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+          // CPF validation
+          function verificarCPF(cpf) {
+            if (!cpf) return false;
+            cpf = cpf.replace(/[^\d]/g, '');
+            if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+            let sum = 0;
+            for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+            let rest = (sum * 10) % 11;
+            if (rest === 10 || rest === 11) rest = 0;
+            if (rest !== parseInt(cpf.substring(9, 10))) return false;
+
+            sum = 0;
+            for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+            rest = (sum * 10) % 11;
+            if (rest === 10 || rest === 11) rest = 0;
+            if (rest !== parseInt(cpf.substring(10, 11))) return false;
+
+            return true;
+          }
+
+          // Inline error helpers
+          function showInlineError(fieldId, message) {
+            const el = document.getElementById(fieldId);
+            if (!el) return;
+            el.classList.add('is-invalid');
+            let feedback = el.nextElementSibling;
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+              feedback = document.createElement('div');
+              feedback.className = 'invalid-feedback';
+              el.parentNode.appendChild(feedback);
+            }
+            feedback.textContent = message;
+          }
+
+          function clearInlineError(fieldId) {
+            const el = document.getElementById(fieldId);
+            if (!el) return;
+            el.classList.remove('is-invalid');
+            const feedback = el.parentNode.querySelector('.invalid-feedback');
+            if (feedback) feedback.remove();
+          }
+
+          // Modal-level alert helpers
+          function showModalAlert(message, type = 'danger') {
+            const el = document.getElementById('alertBeneficiario');
+            const msgHtml = `<div class="alert alert-${type} alert-dismissible" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+              ${message}
+            </div>`;
+            if (el) el.innerHTML = msgHtml; else console.warn('alertBeneficiario placeholder not found');
+            try { const firstAlert = document.querySelector('.modal .alert[role="alert"]'); if (firstAlert) { firstAlert.setAttribute('tabindex','-1'); firstAlert.focus(); } } catch(e){}
+          }
+
+          function clearModalAlert() {
+            const el = document.getElementById('alertBeneficiario');
+            if (el) el.innerHTML = '';
+          }
+
+          function disableSubmit(disabled) {
+            try {
+              const btn = document.querySelector('#formBeneficiario button[type="submit"]');
+              if (btn) { btn.disabled = !!disabled; if (disabled) btn.classList.add('disabled'); else btn.classList.remove('disabled'); }
+            } catch(e) {}
+          }
+
+          // Check duplicates in DB (robust to different response shapes)
+          async function checkExists(field) {
+            const cpf = $('#cpf').val()?.trim() || '';
+            const nis = $('#nis').val()?.trim() || '';
+            try {
+              const res = await $.post('processamento/check_identifiers.php', { cpf, nis });
+              const result = typeof res === 'string' ? JSON.parse(res) : res;
+
+              if (result && result.exists) {
+                const details = Array.isArray(result.details) ? result.details : (result.details ? [result.details] : []);
+                // Attempt to find an entry that matches this field
+                let same = details.find(d => d && (d.field === field || d.field_name === field || d.name === field || d.campo === field));
+                if (!same) {
+                  const payloadVal = field === 'cpf' ? cpf : nis;
+                  same = details.find(d => {
+                    try {
+                      if (!d) return false;
+                      if (d.cpf && String(d.cpf).trim() === String(cpf)) return true;
+                      if (d.nis && String(d.nis).trim() === String(nis)) return true;
+                      if (d.valor && String(d.valor).trim() === String(payloadVal)) return true;
+                      if (d.identificador && String(d.identificador).trim() === String(payloadVal)) return true;
+                    } catch (e) { }
+                    return false;
+                  });
+                }
+
+                if (!same && details.length) same = details[0];
+
+                if (same) {
+                  const friendly = (same.field || field).toUpperCase();
+                  const msg = `${friendly} já existe em ${same.table || same.tabela || 'registro'}${same.id ? ' (id=' + same.id + ')' : ''}`;
+                  showInlineError(field, msg);
+                  showModalAlert(msg, 'danger');
+                  disableSubmit(true);
+                  return false;
+                }
+              }
+
+              // no conflict
+              clearInlineError(field);
+              clearModalAlert();
+              disableSubmit(false);
+              return true;
+            } catch (e) {
+              console.error('Erro ao verificar duplicados', e);
+              // On error, do not block submit (optionally you could block)
+              disableSubmit(false);
+              return true;
+            }
+          }
+
+          // Validate and submit
+          async function verifica() {
+            const nis = $('#nis').val()?.trim();
+            const cpf = $('#cpf').val()?.trim();
+
+            if (!nis || !cpf) {
+              alert("NIS e CPF devem ser informados!");
+              if (!nis) $('#nis').focus();
+              else $('#cpf').focus();
+              return false;
+            }
+
+            if (!verificarCPF(cpf)) {
+              alert("CPF inválido!");
+              $('#cpf').focus();
+              return false;
+            }
+
+            const campos = ["nome", "cod_bairro", "endereco", "cod_tipo"];
+            const labels = ["Nome", "Bairro", "Endereço", "Tipo de Beneficiário"];
+            for (let i = 0; i < campos.length; i++) {
+              if (!$('#' + campos[i]).val()) {
+                alert(labels[i] + " deve ser informado!");
+                $('#' + campos[i]).focus();
+                return false;
+              }
+            }
+
+            // Before submitting, verify uniqueness on server
+            const okCpf = await checkExists('cpf');
+            const okNis = await checkExists('nis');
+            if (!okCpf || !okNis) {
+              // conflict was shown by checkExists
+              return false;
+            }
+
+            $.post('processamento/processar_beneficiario.php', $('#formBeneficiario').serialize(), function(resp) {
+              try {
+                const result = JSON.parse(resp);
+                if (result.success) {
+                  alert('Beneficiário cadastrado com sucesso!');
+                  $('#modalBeneficiario').modal('hide');
+                  location.reload();
+                } else {
+                  alert(result.message || 'Erro ao cadastrar beneficiário');
+                }
+              } catch {
+                alert('Erro ao processar resposta do servidor');
+              }
+            }).fail(function() {
+              alert('Erro ao enviar formulário');
+            });
+
+            return false;
+          }
+
+          // Init
+            $(document).ready(function() {
+
+            // Direct blur events (modal is already in DOM)
+            $('#cpf').on('blur', function() {
+              if (this.value) {
+                if (!verificarCPF(this.value)) {
+                  console.log('CPF inválido');
+                  showInlineError('cpf', 'CPF inválido!');
+                  this.focus();
+                } else {
+                  checkExists('cpf');
+                }
+              } else {
+                clearInlineError('cpf');
+              }
+            });
+
+            $('#nis').on('blur', function() {
+              if (this.value) {
+                checkExists('nis');
+              } else {
+                clearInlineError('nis');
+              }
+            });
+
+            // Restrict cpf/nis inputs to numbers (allow backspace, tab)
+            $('#cpf, #nis').on('keypress', function(e) {
+              const charCode = e.which || e.keyCode;
+              if (charCode !== 8 && charCode !== 9) {
+                if (charCode < 48 || charCode > 57) e.preventDefault();
+              }
+            });
+
+            // debounce helper
+            function debounce(fn, wait) {
+              let t;
+              return function(...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+              };
+            }
+
+            const debouncedCheckCpf = debounce(() => checkExists('cpf'), 350);
+            const debouncedCheckNis = debounce(() => checkExists('nis'), 350);
+
+            $('#cpf').on('input paste change', function() { clearInlineError('cpf'); clearModalAlert(); debouncedCheckCpf(); });
+            $('#nis').on('input paste change', function() { clearInlineError('nis'); clearModalAlert(); debouncedCheckNis(); });
+          });
+        });
+  </script>
+
   <script>
     $(document).ready(function() {
-      console.log('Inicializando DataTables e configurações...');
+    console.log('Inicializando DataTables e configurações...');
 
-      $('#tabela').DataTable({
-        paging: false, // desabilita paginação do DataTables
-        searching: true,
-        ordering: true,
-        language: {
-          url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
-        }
-      });
+    $('#tabela').DataTable({
+      paging: false, // desabilita paginação do DataTables
+      searching: true,
+      ordering: true,
+      language: {
+        url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
+      }
+    });
 
-      $('#modalCategoria').on('show.bs.modal', function(event) {
-        var button = $(event.relatedTarget);
-        var codBeneficiario = button.data('id');
-        $('#cod_beneficiario').val(codBeneficiario);
-      });
+    $('#modalCategoria').on('show.bs.modal', function(event) {
+      var button = $(event.relatedTarget);
+      var codBeneficiario = button.data('id');
+      $('#cod_beneficiario').val(codBeneficiario);
+    });
     });
   </script>
 </body>

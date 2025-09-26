@@ -135,13 +135,13 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
             <li class="nav-item">
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
-            <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
+            <?php if ($currentLevel == 1): ?>
+              <li class="nav-item"><a href="../categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
-            <?php if ($int_nivel == 1): ?>
+            <?php if ($currentLevel == 1): ?>
               <li class="nav-item">
                 <form action="processamento/inport_tab_pagamento.php" method="post" enctype="multipart/form-data" style="display:inline;">
-                  <label class="nav-link mb-0" style="cursor:pointer;">
+                  <label class="nav-link mb-0" style="cursor:pointer; font-weight: normal;padding: 10px; padding-left: 15px;">
                     Importar folha de pagamento
                     <input type="file" name="csvfile" accept=".csv" style="display:none;" onchange="this.form.submit()">
                   </label>
