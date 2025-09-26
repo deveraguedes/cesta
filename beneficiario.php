@@ -396,26 +396,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
   <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-          // CPF validation
+          // CPF validation (user's preferred implementation)
           function verificarCPF(cpf) {
-            if (!cpf) return false;
-            cpf = cpf.replace(/[^\d]/g, '');
-            if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+            cpf = (cpf || '').replace(/\D+/g, '');
+            if (cpf.length !== 11) return false;
 
-            let sum = 0;
-            for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-            let rest = (sum * 10) % 11;
-            if (rest === 10 || rest === 11) rest = 0;
-            if (rest !== parseInt(cpf.substring(9, 10))) return false;
+            let soma = 0;
+            let resto;
+            if (/^(\d)\1{10}$/.test(cpf)) return false; // Verifica sequências iguais
 
-            sum = 0;
-            for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-            rest = (sum * 10) % 11;
-            if (rest === 10 || rest === 11) rest = 0;
-            if (rest !== parseInt(cpf.substring(10, 11))) return false;
+            for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i), 10) * (11 - i);
+            resto = (soma * 10) % 11;
+            if ((resto === 10) || (resto === 11)) resto = 0;
+            if (resto !== parseInt(cpf.substring(9, 10), 10)) return false;
+
+            soma = 0;
+            for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i), 10) * (12 - i);
+            resto = (soma * 10) % 11;
+            if ((resto === 10) || (resto === 11)) resto = 0;
+            if (resto !== parseInt(cpf.substring(10, 11), 10)) return false;
 
             return true;
           }
+
+          // Note: PIS validator removed. NIS field will only be checked to ensure it is NOT a CPF.
 
           // Inline error helpers
           function showInlineError(fieldId, message) {
@@ -491,8 +495,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 if (!same && details.length) same = details[0];
 
                 if (same) {
-                  const friendly = (same.field || field).toUpperCase();
-                  const msg = `${friendly} já existe em ${same.table || same.tabela || 'registro'}${same.id ? ' (id=' + same.id + ')' : ''}`;
+                  const msg = same.message || `${(same.field || field).toUpperCase()} já existe em ${same.table || same.tabela || 'registro'}${same.id ? ' (id=' + same.id + ')' : ''}`;
                   showInlineError(field, msg);
                   showModalAlert(msg, 'danger');
                   disableSubmit(true);
@@ -574,12 +577,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 
             // Direct blur events (modal is already in DOM)
             $('#cpf').on('blur', function() {
-              if (this.value) {
-                if (!verificarCPF(this.value)) {
-                  console.log('CPF inválido');
+              const val = (this.value || '').replace(/[^\d]/g,'');
+              if (val) {
+                if (!verificarCPF(val)) {
                   showInlineError('cpf', 'CPF inválido!');
                   this.focus();
                 } else {
+                  clearInlineError('cpf');
+                  clearModalAlert();
+                  disableSubmit(false);
                   checkExists('cpf');
                 }
               } else {
@@ -588,7 +594,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             });
 
             $('#nis').on('blur', function() {
-              if (this.value) {
+              const val = (this.value || '').replace(/[^\d]/g,'');
+              if (val) {
+                // If the NIS field contains a valid CPF, warn about swapped fields
+                if (verificarCPF(val)) {
+                  showInlineError('nis', 'Este número parece ser um CPF, não um NIS. Verifique os campos.');
+                  showModalAlert('NIS informado parece ser um CPF. Verifique se os valores não estão trocados.', 'warning');
+                  disableSubmit(true);
+                  this.focus();
+                  return;
+                }
+
+                // Otherwise, accept and check duplicates on server
+                clearInlineError('nis');
+                clearModalAlert();
+                disableSubmit(false);
                 checkExists('nis');
               } else {
                 clearInlineError('nis');
@@ -617,6 +637,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 
             $('#cpf').on('input paste change', function() { clearInlineError('cpf'); clearModalAlert(); debouncedCheckCpf(); });
             $('#nis').on('input paste change', function() { clearInlineError('nis'); clearModalAlert(); debouncedCheckNis(); });
+            // Intercept form submit to run verifica()
+            $('#formBeneficiario').on('submit', function(e) {
+              e.preventDefault();
+              verifica();
+            });
           });
         });
   </script>

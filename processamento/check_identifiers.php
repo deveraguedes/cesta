@@ -34,7 +34,12 @@ try {
     LIMIT 1");
         $stmt->execute([':cpf' => $cpf_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $found[] = ['table' => 'beneficiario.beneficiario', 'field' => 'cpf', 'id' => $row['id']];
+            $found[] = [
+                'table' => 'beneficiario.beneficiario',
+                'field' => 'cpf',
+                'id' => $row['id'],
+                'message' => 'CPF ja esta na lista'
+            ];
         }
 
         // --- Check CPF in beneficiario.folha ---
@@ -44,7 +49,12 @@ try {
     LIMIT 1");
         $stmt->execute([':cpf' => $cpf_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $found[] = ['table' => 'beneficiario.folha', 'field' => 'cpf', 'id' => $row['id']];
+            $found[] = [
+                'table' => 'beneficiario.folha',
+                'field' => 'cpf',
+                'id' => $row['id'],
+                'message' => 'CPF ja esta na folha de pagamento'
+            ];
         }
     }
 
@@ -56,7 +66,12 @@ try {
     LIMIT 1");
         $stmt->execute([':nis' => $nis_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $found[] = ['table' => 'beneficiario.beneficiario', 'field' => 'nis', 'id' => $row['id']];
+            $found[] = [
+                'table' => 'beneficiario.beneficiario',
+                'field' => 'nis',
+                'id' => $row['id'],
+                'message' => 'NIS ja esta na lista'
+            ];
         }
 
         // --- Check NIS in beneficiario.folha ---
@@ -66,7 +81,12 @@ try {
     LIMIT 1");
         $stmt->execute([':nis' => $nis_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $found[] = ['table' => 'beneficiario.folha', 'field' => 'nis', 'id' => $row['id']];
+            $found[] = [
+                'table' => 'beneficiario.folha',
+                'field' => 'nis',
+                'id' => $row['id'],
+                'message' => 'NIS ja esta na folha de pagamento'
+            ];
         }
     }
 
