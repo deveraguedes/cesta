@@ -82,15 +82,12 @@
     // Modal alert helpers
     let lastAlert = { field: null, value: null };
     function showModalAlert(message, type = 'danger', field = null, value = null) {
-      if ($alertEl.length) {
-        $alertEl.html('<button type="button" class="close" data-dismiss="alert" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>' + message);
-        $alertEl.removeClass('d-none alert-danger alert-warning alert-info alert-success').addClass('alert alert-' + type);
-      }
+      // Disable top alert - only use inline validation
+      // We're keeping the lastAlert state tracking for compatibility
       lastAlert.field = field; lastAlert.value = value != null ? String(value).trim() : null;
-      try { const firstAlert = document.querySelector('.modal .alert[role="alert"]'); if (firstAlert) { firstAlert.setAttribute('tabindex','-1'); firstAlert.focus(); } } catch(e){}
     }
     function clearModalAlert() {
-      if ($alertEl.length) { $alertEl.html(''); $alertEl.addClass('d-none').removeClass('alert alert-danger alert-warning alert-info alert-success'); }
+      // Just clear the tracking state
       lastAlert.field = null; lastAlert.value = null;
     }
 

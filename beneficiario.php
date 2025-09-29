@@ -24,6 +24,25 @@ $perPage = 50;
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
 
+// Calculate total and active beneficiaries to determine available spots
+$pdo = Database::conexao();
+
+// Get the total number of vagas from saldo_unidade table
+$stmt = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
+$stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$maxBeneficiarios = $result ? $result['saldo'] : 0;
+
+// Count active beneficiaries
+$stmt = $pdo->prepare("SELECT COUNT(*) as ativos FROM beneficiario.beneficiario WHERE cod_unidade = :cod_unidade AND situacao = 1");
+$stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+$stmt->execute();
+$ativosBeneficiarios = $stmt->fetch(PDO::FETCH_ASSOC)['ativos'];
+
+// Calculate available spots
+$vagasDisponiveis = $maxBeneficiarios - $ativosBeneficiarios;
+
 // Provide data for the modal form (types and neighborhoods)
 $tipos = $b->exibirTipo();
 $bairros = $b->exibirBairro();
@@ -260,9 +279,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">Lista de Beneficiários</h2>
-          <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modalBeneficiario">
-            + Adicionar Beneficiário
-          </a>
+          <div class="d-flex flex-column align-items-end">
+            <a href="#" class="btn btn-success mb-2 <?= $vagasDisponiveis <= 0 ? 'disabled' : '' ?>" data-toggle="modal" data-target="<?= $vagasDisponiveis > 0 ? '#modalBeneficiario' : '' ?>">
+              + Adicionar Beneficiário
+            </a>
+            <div class="badge <?= $vagasDisponiveis > 0 ? 'badge-info' : 'badge-danger' ?> p-2">
+              <strong>Vagas disponíveis:</strong> <?= $vagasDisponiveis ?> de <?= $maxBeneficiarios ?>
+            </div>
+          </div>
         </div>
 
         <table id="tabela" class="table table-striped table-bordered">
@@ -307,7 +331,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                   <?php if ($row["situacao"] == 1): ?>
                     <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-danger mb-1">Remover da Cesta</a>
                   <?php else: ?>
-                    <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-success mb-1">Inserir na Cesta</a>
+                    <?php if ($vagasDisponiveis > 0): ?>
+                      <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-success mb-1">Inserir na Cesta</a>
+                    <?php else: ?>
+                      <button class="btn btn-sm btn-secondary mb-1" disabled>Sem vagas disponíveis</button>
+                    <?php endif; ?>
                   <?php endif; ?>
                 </td>
               </tr>
