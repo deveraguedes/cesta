@@ -32,7 +32,7 @@ $stmt = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_un
 $stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
-$maxBeneficiarios = $result ? $result['saldo'] : 0;
+$saldoVagas = $result ? $result['saldo'] : 0;
 
 // Count active beneficiaries
 $stmt = $pdo->prepare("SELECT COUNT(*) as ativos FROM beneficiario.beneficiario WHERE cod_unidade = :cod_unidade AND situacao = 1");
@@ -40,8 +40,11 @@ $stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
 $stmt->execute();
 $ativosBeneficiarios = $stmt->fetch(PDO::FETCH_ASSOC)['ativos'];
 
-// Calculate available spots
-$vagasDisponiveis = $maxBeneficiarios - $ativosBeneficiarios;
+// Calculate total spots (saldo + active beneficiaries)
+$totalVagas = $saldoVagas + $ativosBeneficiarios;
+
+// The available spots is the saldo value
+$vagasDisponiveis = $saldoVagas;
 
 // Provide data for the modal form (types and neighborhoods)
 $tipos = $b->exibirTipo();
@@ -284,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
               + Adicionar Beneficiário
             </a>
             <div class="badge <?= $vagasDisponiveis > 0 ? 'badge-info' : 'badge-danger' ?> p-2">
-              <strong>Vagas disponíveis:</strong> <?= $vagasDisponiveis ?> de <?= $maxBeneficiarios ?>
+              <strong>Vagas disponíveis:</strong> <?= $vagasDisponiveis ?> de <?= $totalVagas ?>
             </div>
           </div>
         </div>
