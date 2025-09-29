@@ -196,11 +196,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 <?php endif; ?>
                 <td><?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?></td>
                 <td>
-                  <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-primary mb-1">Alterar</a>
+                  <a href="#" class="btn btn-sm btn-primary mb-1" data-toggle="modal" data-target="#modalAlterarBeneficiario" data-id="<?= $row['cod_beneficiario']; ?>" data-usuario="<?= $cod_usuario; ?>">Alterar</a>
                   <?php if ($row["situacao"] == 1): ?>
-                    <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-danger mb-1">Remover da Cesta</a>
+                    <a href="usuarios/processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-danger mb-1">Remover da Cesta</a>
                   <?php else: ?>
-                    <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-success mb-1">Inserir na Cesta</a>
+                    <a href="usuarios/processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-success mb-1">Inserir na Cesta</a>
                   <?php endif; ?>
                 </td>
               </tr>
@@ -286,6 +286,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       </div>
     </div>
   </div>
+  
+  <!-- Modal Alterar Beneficiário -->
+  <div class="modal fade" id="modalAlterarBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalAlterarBeneficiarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <!-- Conteúdo será carregado via AJAX -->
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -309,6 +318,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
         var button = $(event.relatedTarget);
         var codBeneficiario = button.data('id');
         $('#cod_beneficiario').val(codBeneficiario);
+      });
+      
+      $('#modalAlterarBeneficiario').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var codBeneficiario = button.data('id');
+        var codUsuario = button.data('usuario');
+        
+        // Carregar o conteúdo do formulário via AJAX
+        $.ajax({
+          url: 'usuarios/processamento/alterar_beneficiario.php',
+          type: 'GET',
+          data: {
+            cod_beneficiario: codBeneficiario,
+            cod_usuario: codUsuario
+          },
+          success: function(response) {
+            $('#modalAlterarBeneficiario .modal-content').html(response);
+          },
+          error: function() {
+            alert('Erro ao carregar o formulário de alteração.');
+          }
+        });
       });
     });
   </script>
