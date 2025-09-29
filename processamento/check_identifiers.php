@@ -28,25 +28,31 @@ $found = [];
 try {
     // --- Check CPF in beneficiario.beneficiario ---
     if ($cpf_clean !== '') {
-    $stmt = $db->prepare("SELECT NULL AS id, cpf, nis
-    FROM beneficiario.beneficiario
-    WHERE regexp_replace(CAST(cpf AS text), '[^0-9]', '', 'g') = :cpf
-    LIMIT 1");
+        $stmt = $db->prepare("SELECT b.cod_beneficiario AS id, b.cpf, b.nis, b.cod_unidade,
+        (SELECT u.vch_unidade FROM beneficiario.unidade u WHERE u.cod_unidade = b.cod_unidade LIMIT 1) AS unidade_nome
+        FROM beneficiario.beneficiario b
+        WHERE regexp_replace(CAST(b.cpf AS text), '[^0-9]', '', 'g') = :cpf
+        LIMIT 1");
         $stmt->execute([':cpf' => $cpf_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $codu = isset($row['cod_unidade']) ? $row['cod_unidade'] : null;
+            $unidadename = isset($row['unidade_nome']) ? $row['unidade_nome'] : null;
+            $msg = $unidadename ? ('CPF ja esta na lista na unidade ' . $unidadename) : 'CPF ja esta na lista';
             $found[] = [
                 'table' => 'beneficiario.beneficiario',
                 'field' => 'cpf',
                 'id' => $row['id'],
-                'message' => 'CPF ja esta na lista'
+                'cod_unidade' => $codu,
+                'unidade' => $unidadename,
+                'message' => $msg
             ];
         }
 
         // --- Check CPF in beneficiario.folha ---
-    $stmt = $db->prepare("SELECT NULL AS id, cpf, nis
-    FROM beneficiario.folha
-    WHERE regexp_replace(CAST(cpf AS text), '[^0-9]', '', 'g') = :cpf
-    LIMIT 1");
+        $stmt = $db->prepare("SELECT NULL AS id, cpf, nis
+        FROM beneficiario.folha
+        WHERE regexp_replace(CAST(cpf AS text), '[^0-9]', '', 'g') = :cpf
+        LIMIT 1");
         $stmt->execute([':cpf' => $cpf_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $found[] = [
@@ -60,25 +66,31 @@ try {
 
     // --- Check NIS in beneficiario.beneficiario ---
     if ($nis_clean !== '') {
-    $stmt = $db->prepare("SELECT NULL AS id, cpf, nis
-    FROM beneficiario.beneficiario
-    WHERE regexp_replace(CAST(nis AS text), '[^0-9]', '', 'g') = :nis
-    LIMIT 1");
+        $stmt = $db->prepare("SELECT b.cod_beneficiario AS id, b.cpf, b.nis, b.cod_unidade,
+        (SELECT u.vch_unidade FROM beneficiario.unidade u WHERE u.cod_unidade = b.cod_unidade LIMIT 1) AS unidade_nome
+        FROM beneficiario.beneficiario b
+        WHERE regexp_replace(CAST(b.nis AS text), '[^0-9]', '', 'g') = :nis
+        LIMIT 1");
         $stmt->execute([':nis' => $nis_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $codu = isset($row['cod_unidade']) ? $row['cod_unidade'] : null;
+            $unidadename = isset($row['unidade_nome']) ? $row['unidade_nome'] : null;
+            $msg = $unidadename ? ('NIS ja esta na lista na unidade ' . $unidadename) : 'NIS ja esta na lista';
             $found[] = [
                 'table' => 'beneficiario.beneficiario',
                 'field' => 'nis',
                 'id' => $row['id'],
-                'message' => 'NIS ja esta na lista'
+                'cod_unidade' => $codu,
+                'unidade' => $unidadename,
+                'message' => $msg
             ];
         }
 
         // --- Check NIS in beneficiario.folha ---
-    $stmt = $db->prepare("SELECT NULL AS id, cpf, nis
-    FROM beneficiario.folha
-    WHERE regexp_replace(CAST(nis AS text), '[^0-9]', '', 'g') = :nis
-    LIMIT 1");
+        $stmt = $db->prepare("SELECT NULL AS id, cpf, nis
+        FROM beneficiario.folha
+        WHERE regexp_replace(CAST(nis AS text), '[^0-9]', '', 'g') = :nis
+        LIMIT 1");
         $stmt->execute([':nis' => $nis_clean]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $found[] = [
