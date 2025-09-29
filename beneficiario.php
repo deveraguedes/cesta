@@ -24,6 +24,25 @@ $perPage = 50;
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
 
+// Calculate total and active beneficiaries to determine available spots
+$pdo = Database::conexao();
+
+// Get the total number of vagas from saldo_unidade table
+$stmt = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
+$stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$maxBeneficiarios = $result ? $result['saldo'] : 0;
+
+// Count active beneficiaries
+$stmt = $pdo->prepare("SELECT COUNT(*) as ativos FROM beneficiario.beneficiario WHERE cod_unidade = :cod_unidade AND situacao = 1");
+$stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+$stmt->execute();
+$ativosBeneficiarios = $stmt->fetch(PDO::FETCH_ASSOC)['ativos'];
+
+// Calculate available spots
+$vagasDisponiveis = $maxBeneficiarios - $ativosBeneficiarios;
+
 // Provide data for the modal form (types and neighborhoods)
 $tipos = $b->exibirTipo();
 $bairros = $b->exibirBairro();
@@ -32,13 +51,20 @@ $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
 $c = new Categoria();
-if ($int_nivel == 1) {
+// Allow administrators (1) and sedes (3) to manage categories
+if ($int_nivel == 1 || $int_nivel == 3) {
   $c->criarCategoriasPadrao();
   $categorias = $c->listarCategorias();
 }
 
 /* ====== PROCESSA SALVAR CATEGORIA ====== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $_POST['cod_categoria'])) {
+  // Only administrators (1) or sedes (3) may change categories
+  if (!($int_nivel == 1 || $int_nivel == 3)) {
+    echo "<script>alert('Permissão negada para alterar categoria'); window.location='beneficiario.php';</script>";
+    exit;
+  }
+
   $cod_beneficiario = (int) $_POST['cod_beneficiario'];
   $cod_categoria = (int) $_POST['cod_categoria'];
 
@@ -135,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
           <li class="nav-item"><a href="beneficiario.php" class="nav-link">Beneficiários</a></li>
           <li class="nav-item"><a href="relatorios/relat.php" class="nav-link">Relatórios</a></li>
-          <?php if ($int_nivel == 1): ?>
+          <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
             <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
           <?php endif; ?>
           <?php if ($int_nivel == 1): ?>
@@ -220,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 </select>
               </div>
 
-              <?php if ($_SESSION['int_level'] == 1): ?>
+              <?php if ($_SESSION['int_level'] == 1 || $_SESSION['int_level'] == 3): ?>
                 <div class="form-group">
                   <label for="cod_categoria">Categoria</label>
                   <select name="cod_categoria" id="cod_categoria" class="form-control">
@@ -253,9 +279,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">Lista de Beneficiários</h2>
-          <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modalBeneficiario">
-            + Adicionar Beneficiário
-          </a>
+          <div class="d-flex flex-column align-items-end">
+            <a href="#" class="btn btn-success mb-2 <?= $vagasDisponiveis <= 0 ? 'disabled' : '' ?>" data-toggle="modal" data-target="<?= $vagasDisponiveis > 0 ? '#modalBeneficiario' : '' ?>">
+              + Adicionar Beneficiário
+            </a>
+            <div class="badge <?= $vagasDisponiveis > 0 ? 'badge-info' : 'badge-danger' ?> p-2">
+              <strong>Vagas disponíveis:</strong> <?= $vagasDisponiveis ?> de <?= $maxBeneficiarios ?>
+            </div>
+          </div>
         </div>
 
         <table id="tabela" class="table table-striped table-bordered">
@@ -268,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
               <th>Localidade</th>
               <th>Endereço</th>
               <th>Tipo de Beneficiário</th>
-              <?php if ($int_nivel == 1): ?><th>Categoria</th><?php endif; ?>
+              <?php if ($int_nivel == 1 || $int_nivel == 3): ?><th>Categoria</th><?php endif; ?>
               <th>Situação</th>
               <th>Ações</th>
             </tr>
@@ -283,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 <td><?= htmlspecialchars($row["localidade"]); ?></td>
                 <td><?= htmlspecialchars($row["endereco"]); ?></td>
                 <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
-                <?php if ($int_nivel == 1): ?>
+                <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
                   <td>
                     <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
                     <a href="#" class="btn btn-sm btn-warning mt-1"

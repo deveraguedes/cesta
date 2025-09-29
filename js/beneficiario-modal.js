@@ -82,15 +82,12 @@
     // Modal alert helpers
     let lastAlert = { field: null, value: null };
     function showModalAlert(message, type = 'danger', field = null, value = null) {
-      if ($alertEl.length) {
-        $alertEl.html('<button type="button" class="close" data-dismiss="alert" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>' + message);
-        $alertEl.removeClass('d-none alert-danger alert-warning alert-info alert-success').addClass('alert alert-' + type);
-      }
+      // Disable top alert - only use inline validation
+      // We're keeping the lastAlert state tracking for compatibility
       lastAlert.field = field; lastAlert.value = value != null ? String(value).trim() : null;
-      try { const firstAlert = document.querySelector('.modal .alert[role="alert"]'); if (firstAlert) { firstAlert.setAttribute('tabindex','-1'); firstAlert.focus(); } } catch(e){}
     }
     function clearModalAlert() {
-      if ($alertEl.length) { $alertEl.html(''); $alertEl.addClass('d-none').removeClass('alert alert-danger alert-warning alert-info alert-success'); }
+      // Just clear the tracking state
       lastAlert.field = null; lastAlert.value = null;
     }
 
@@ -120,17 +117,32 @@
         const result = typeof res === 'string' ? JSON.parse(res) : res;
         if (result && result.exists) {
           const details = Array.isArray(result.details) ? result.details : (result.details ? [result.details] : []);
-          let same = details.find(d => d && (d.field === field || d.field_name === field || d.name === field || d.campo === field));
+          // Prefer a matching detail by field -> by value
+          let same = details.find(d => d && (d.field === field || d.field_name === field));
           if (!same) {
             const payloadVal = field === 'cpf' ? cpf : nis;
-            same = details.find(d => { try { if (!d) return false; if (d.cpf && String(d.cpf).trim() === String(cpf)) return true; if (d.nis && String(d.nis).trim() === String(nis)) return true; if (d.valor && String(d.valor).trim() === String(payloadVal)) return true; if (d.identificador && String(d.identificador).trim() === String(payloadVal)) return true; } catch(e){} return false; });
+            same = details.find(d => {
+              try {
+                if (!d) return false;
+                if (d.cpf && String(d.cpf).replace(/\D/g,'') === String(cpf)) return true;
+                if (d.nis && String(d.nis).replace(/\D/g,'') === String(nis)) return true;
+                if (d.valor && String(d.valor).replace(/\D/g,'') === String(payloadVal)) return true;
+                if (d.identificador && String(d.identificador).replace(/\D/g,'') === String(payloadVal)) return true;
+              } catch(e){}
+              return false;
+            });
           }
           if (!same && details.length) same = details[0];
           if (same) {
             const payloadVal = field === 'cpf' ? cpf : nis;
-            const msg = same.message || `${(same.field || field).toUpperCase()} já existe em ${same.table || same.tabela || 'registro'}${same.id ? ' (id=' + same.id + ')' : ''}`;
-            const payload = field === 'cpf' ? cpf : nis;
-            showInlineError(field, msg, payload);
+            // Build a user-friendly message. Server may include unidade_cod and message
+            let msg = same.message || `${(same.field || field).toUpperCase()} já existe`;
+            if (same.unidade_cod || same.cod_unidade || same.unidade) {
+              const u = same.unidade || same.unit_name || same.unidade_nome || null;
+              const cod = same.unidade_cod || same.cod_unidade || null;
+              msg = `${(field === 'cpf' ? 'CPF' : 'NIS')} já existe na unidade ${u || cod}`;
+            }
+            showInlineError(field, msg, payloadVal);
             showModalAlert(msg, 'danger', field, payloadVal);
             disableSubmit(true);
             return false;
@@ -153,24 +165,78 @@
       const okCpf = await checkExists('cpf'); const okNis = await checkExists('nis'); if (!okCpf || !okNis) return false;
       // Inputmask is configured to remove mask on submit, but to be safe ensure digits-only
       try { $cpf.val( getCpfDigits() ); } catch(e){}
-      $.post('processamento/processar_beneficiario.php', $form.serialize(), function(resp){ try{ const result = JSON.parse(resp); if (result.success) { alert('Beneficiário cadastrado com sucesso!'); $('#modalBeneficiario').modal('hide'); location.reload(); } else { alert(result.message || 'Erro ao cadastrar beneficiário'); } } catch { alert('Erro ao processar resposta do servidor'); } }).fail(function(){ alert('Erro ao enviar formulário'); });
+      $.post('processamento/processar_beneficiario.php', $form.serialize(), function(resp){
+        try {
+          const result = typeof resp === 'string' ? JSON.parse(resp) : resp;
+          if (result && result.success) {
+            showModalAlert('Beneficiário cadastrado com sucesso!', 'success');
+            setTimeout(function(){ $('#modalBeneficiario').modal('hide'); location.reload(); }, 900);
+          } else {
+            const msg = (result && result.message) ? result.message : 'Erro ao cadastrar beneficiário';
+            // If server provided unidade info, append it cleanly
+            if (result) {
+              const unitName = result.unidade || result.unidade_nome || null;
+              const unitCode = result.unidade_cod || result.cod_unidade || null;
+              if (unitName) {
+                showModalAlert(msg + ' (unidade: ' + unitName + ')', 'danger');
+              } else if (unitCode) {
+                showModalAlert(msg + ' (unidade: ' + unitCode + ')', 'danger');
+              } else {
+                showModalAlert(msg, 'danger');
+              }
+            } else {
+              showModalAlert(msg, 'danger');
+            }
+            disableSubmit(true);
+          }
+        } catch (err) {
+          showModalAlert('Erro ao processar resposta do servidor', 'danger');
+        }
+      }).fail(function(){ showModalAlert('Erro ao enviar formulário', 'danger'); });
       return false;
     }
 
     // debounce
     function debounce(fn, wait){ let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), wait); }; }
 
-    const debouncedCheckCpf = debounce(()=>checkExists('cpf'), 350);
-    const debouncedCheckNis = debounce(()=>checkExists('nis'), 350);
+    // Increase debounce slightly to avoid flicker during typing/paste
+    const debouncedCheckCpf = debounce(()=>checkExists('cpf'), 700);
+    const debouncedCheckNis = debounce(()=>checkExists('nis'), 700);
+
+  // Slightly delayed check for blur events to avoid flicker
+  const blurCheckCpf = debounce(()=>checkExists('cpf'), 800);
+  const blurCheckNis = debounce(()=>checkExists('nis'), 800);
 
     // events
-    $cpf.on('blur', function(){ const val = getCpfDigits(); if (val) { if (!verificarCPF(val)) { showInlineError('cpf','CPF inválido!', val); this.focus(); } else { clearInlineError('cpf'); clearModalAlert(); disableSubmit(false); checkExists('cpf'); } } else clearInlineError('cpf'); });
+    // Replace blur-triggered validation with debounced validation on input
+    // This shows the 'CPF inválido' message only after the value has been stable for a bit,
+    // avoiding quick flickers when the user types or pastes.
+    const debouncedValidateCpf = debounce(function(){
+      const val = getCpfDigits();
+      if (val) {
+        if (!verificarCPF(val)) {
+          showInlineError('cpf', 'CPF inválido!', val);
+        } else {
+          clearInlineError('cpf', true);
+        }
+      } else {
+        clearInlineError('cpf', true);
+      }
+    }, 700);
 
     $nis.on('blur', function(){ const val = ($nis.val()||'').replace(/\D/g,''); if (val){ if (verificarPIS(val)){ clearInlineError('nis'); clearModalAlert(); disableSubmit(false); checkExists('nis'); return; } if (verificarCPF(val) && !verificarPIS(val)){ showInlineError('nis','Este número parece ser um CPF, não um NIS. Verifique os campos.', val); showModalAlert('NIS informado parece ser um CPF. Verifique se os valores não estão trocados.', 'warning'); disableSubmit(true); this.focus(); return; } showInlineError('nis','NIS inválido ou com formato desconhecido. Confirme o número.', val); showModalAlert('NIS informado não passou na validação local; verifique se está correto.', 'warning'); disableSubmit(false); checkExists('nis'); } else clearInlineError('nis'); });
 
     $cpf.add($nis).on('keypress', function(e){ const charCode = e.which || e.keyCode; if (charCode !== 8 && charCode !== 9) { if (charCode < 48 || charCode > 57) e.preventDefault(); } });
 
-    $cpf.on('input paste change', function(){ clearInlineError('cpf'); if (lastAlert.field === 'cpf'){ const current = getCpfDigits(); if (current !== lastAlert.value) clearModalAlert(); } debouncedCheckCpf(); });
+    $cpf.on('input paste change', function(){
+      clearInlineError('cpf');
+      if (lastAlert.field === 'cpf'){
+        const current = getCpfDigits();
+        if (current !== lastAlert.value) clearModalAlert();
+      }
+      debouncedCheckCpf();
+      debouncedValidateCpf();
+    });
     $nis.on('input paste change', function(){ clearInlineError('nis'); if (lastAlert.field === 'nis'){ const current = ($nis.val()||'').trim(); if (current !== lastAlert.value) clearModalAlert(); } debouncedCheckNis(); });
 
     $form.on('submit', function(e){ e.preventDefault(); verifica(); });

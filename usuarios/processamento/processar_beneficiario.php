@@ -75,6 +75,83 @@ try {
         exit;
     }
 
+    // --- Duplicate checks (beneficiario list and folha) ---
+    // Use digit-only comparisons on DB side via regexp_replace to be robust against formatting
+    $pdo = Database::conexao();
+    $submitted_unidade = isset($_POST['cod_unidade']) && $_POST['cod_unidade'] !== '' ? (int) $_POST['cod_unidade'] : ($_SESSION['cod_unidade'] ?? null);
+
+    // Helper to fetch unidade name
+    $getUnidadeName = function($cod_unidade) use ($pdo) {
+        if (empty($cod_unidade)) return null;
+        $s = $pdo->prepare("SELECT vch_unidade FROM beneficiario.unidade WHERE cod_unidade = :cod_unidade LIMIT 1");
+        $s->bindValue(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+        $s->execute();
+        $r = $s->fetch(PDO::FETCH_ASSOC);
+        return $r ? $r['vch_unidade'] : null;
+    };
+
+    // Check CPF duplicates
+    $cpf_digits = preg_replace('/\D/', '', (string)$cpf_raw);
+    if ($cpf_digits !== '') {
+        // Check in folha_p_2023 first
+    $sf = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
+        $sf->bindValue(':cpf', $cpf_digits);
+        $sf->execute();
+        if ($sf->fetch()) {
+            echo json_encode(['success' => false, 'message' => 'CPF já está na folha de pagamento']);
+            exit;
+        }
+
+        // Check in beneficiario table
+    $sb = $pdo->prepare("SELECT cod_unidade FROM beneficiario.beneficiario WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
+        $sb->bindValue(':cpf', $cpf_digits);
+        $sb->execute();
+        if ($row = $sb->fetch(PDO::FETCH_ASSOC)) {
+            $found_unidade = isset($row['cod_unidade']) ? (int)$row['cod_unidade'] : null;
+            $unitName = $getUnidadeName($found_unidade);
+            // Prefer showing the unidade name or code when available so the user knows where the
+            // existing record lives. This is helpful even when it belongs to the same unidade.
+            if ($unitName || $found_unidade) {
+                $displayUnit = $unitName ?: $found_unidade;
+                $msg = 'CPF já existe na lista na unidade ' . $displayUnit;
+            } else {
+                $msg = 'CPF já existe na lista';
+            }
+            echo json_encode(['success' => false, 'message' => $msg, 'unidade_cod' => $found_unidade, 'unidade' => $unitName]);
+            exit;
+        }
+    }
+
+    // Check NIS duplicates
+    $nis_digits = preg_replace('/\D/', '', (string)$nis_raw);
+    if ($nis_digits !== '') {
+        // Check in folha_p_2023 first
+    $sf2 = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(nis AS text), '\\D', '', 'g') = :nis LIMIT 1");
+        $sf2->bindValue(':nis', $nis_digits);
+        $sf2->execute();
+        if ($sf2->fetch()) {
+            echo json_encode(['success' => false, 'message' => 'NIS já está na folha de pagamento']);
+            exit;
+        }
+
+        // Check in beneficiario table
+    $sb2 = $pdo->prepare("SELECT cod_unidade FROM beneficiario.beneficiario WHERE regexp_replace(CAST(COALESCE(nis::text, '') AS text), '\\D', '', 'g') = :nis LIMIT 1");
+        $sb2->bindValue(':nis', $nis_digits);
+        $sb2->execute();
+        if ($row = $sb2->fetch(PDO::FETCH_ASSOC)) {
+            $found_unidade = isset($row['cod_unidade']) ? (int)$row['cod_unidade'] : null;
+            $unitName = $getUnidadeName($found_unidade);
+            if ($unitName || $found_unidade) {
+                $displayUnit = $unitName ?: $found_unidade;
+                $msg = 'NIS já existe na lista na unidade ' . $displayUnit;
+            } else {
+                $msg = 'NIS já existe na lista';
+            }
+            echo json_encode(['success' => false, 'message' => $msg, 'unidade_cod' => $found_unidade, 'unidade' => $unitName]);
+            exit;
+        }
+    }
+
     $beneficiario = new Beneficiario();
 
     // Atribuir valores do formulário
