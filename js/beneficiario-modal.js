@@ -163,14 +163,40 @@
     const debouncedCheckCpf = debounce(()=>checkExists('cpf'), 350);
     const debouncedCheckNis = debounce(()=>checkExists('nis'), 350);
 
+  // Slightly delayed check for blur events to avoid flicker
+  const blurCheckCpf = debounce(()=>checkExists('cpf'), 400);
+  const blurCheckNis = debounce(()=>checkExists('nis'), 400);
+
     // events
-    $cpf.on('blur', function(){ const val = getCpfDigits(); if (val) { if (!verificarCPF(val)) { showInlineError('cpf','CPF inválido!', val); this.focus(); } else { clearInlineError('cpf'); clearModalAlert(); disableSubmit(false); checkExists('cpf'); } } else clearInlineError('cpf'); });
+    // Replace blur-triggered validation with debounced validation on input
+    // This shows the 'CPF inválido' message only after the value has been stable for a bit,
+    // avoiding quick flickers when the user types or pastes.
+    const debouncedValidateCpf = debounce(function(){
+      const val = getCpfDigits();
+      if (val) {
+        if (!verificarCPF(val)) {
+          showInlineError('cpf', 'CPF inválido!', val);
+        } else {
+          clearInlineError('cpf', true);
+        }
+      } else {
+        clearInlineError('cpf', true);
+      }
+    }, 700);
 
     $nis.on('blur', function(){ const val = ($nis.val()||'').replace(/\D/g,''); if (val){ if (verificarPIS(val)){ clearInlineError('nis'); clearModalAlert(); disableSubmit(false); checkExists('nis'); return; } if (verificarCPF(val) && !verificarPIS(val)){ showInlineError('nis','Este número parece ser um CPF, não um NIS. Verifique os campos.', val); showModalAlert('NIS informado parece ser um CPF. Verifique se os valores não estão trocados.', 'warning'); disableSubmit(true); this.focus(); return; } showInlineError('nis','NIS inválido ou com formato desconhecido. Confirme o número.', val); showModalAlert('NIS informado não passou na validação local; verifique se está correto.', 'warning'); disableSubmit(false); checkExists('nis'); } else clearInlineError('nis'); });
 
     $cpf.add($nis).on('keypress', function(e){ const charCode = e.which || e.keyCode; if (charCode !== 8 && charCode !== 9) { if (charCode < 48 || charCode > 57) e.preventDefault(); } });
 
-    $cpf.on('input paste change', function(){ clearInlineError('cpf'); if (lastAlert.field === 'cpf'){ const current = getCpfDigits(); if (current !== lastAlert.value) clearModalAlert(); } debouncedCheckCpf(); });
+    $cpf.on('input paste change', function(){
+      clearInlineError('cpf');
+      if (lastAlert.field === 'cpf'){
+        const current = getCpfDigits();
+        if (current !== lastAlert.value) clearModalAlert();
+      }
+      debouncedCheckCpf();
+      debouncedValidateCpf();
+    });
     $nis.on('input paste change', function(){ clearInlineError('nis'); if (lastAlert.field === 'nis'){ const current = ($nis.val()||'').trim(); if (current !== lastAlert.value) clearModalAlert(); } debouncedCheckNis(); });
 
     $form.on('submit', function(e){ e.preventDefault(); verifica(); });
