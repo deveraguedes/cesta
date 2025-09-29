@@ -3,6 +3,7 @@ include_once(__DIR__ . '/../../classes/beneficiario.class.php');
 include_once(__DIR__ . '/../../classes/usuarios.class.php');
 include_once(__DIR__ . '/../../classes/categoria.class.php');
 include_once(__DIR__ . '/../../classes/conexao.class.php');
+
 $b = new Beneficiario();
 
 $result_alterar = $b->exibirBeneficiarioCod($_GET['cod_beneficiario']);

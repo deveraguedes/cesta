@@ -1,58 +1,65 @@
 <?php
+session_start();
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
+header('Content-Type: application/json');
 
-session_start();
 include_once('../../classes/beneficiario.class.php');
 
-// Verificar se o usuário está logado
+// Verificar login
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Sessão expirada. Por favor, faça login novamente.']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Sessão expirada. Por favor, faça login novamente.'
+    ]);
     exit;
 }
 
-// Obter dados da sessão
 $cod_usuario = $_SESSION['user_id'];
-$cod_unidade = $_SESSION['cod_unidade'];
+$cod_unidade = $_SESSION['cod_unidade'] ?? null;
 
-// Verificar se os parâmetros necessários foram fornecidos
-if (!isset($_GET["situacao"]) || !isset($_GET["cod_beneficiario"])) {
-    echo json_encode(['status' => 'error', 'message' => 'Parâmetros insuficientes.']);
+// Verificar parâmetros obrigatórios
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' ||
+    !isset($_POST["situacao"], $_POST["cod_beneficiario"], $_POST["cod_unidade"])) {
+    echo json_encode(['success' => false, 'message' => 'Parâmetros insuficientes.']);
     exit;
 }
 
-// Obter parâmetros da requisição
-$situacao = $_GET["situacao"];
-$cod_beneficiario = $_GET["cod_beneficiario"];
+$situacao = (int) $_POST["situacao"]; // 1 = inserir, 0 = remover
+$cod_beneficiario = (int) $_POST["cod_beneficiario"];
+$cod_unidade = (int) $_POST["cod_unidade"];
 
-// Criar e popular o objeto
-$b = new Beneficiario();
-$b->setCod_beneficiario($cod_beneficiario);
-$b->setCod_usuario($cod_usuario);
-$b->setCod_unidade($cod_unidade);
-
-// Processar a alteração de situação
-$resultado = false;
-$mensagem = '';
-
-if ($situacao == 1) {
-    // Desativar beneficiário
-    $situacao = 0;
+try {
+    $b = new Beneficiario();
+    $b->setCod_beneficiario($cod_beneficiario);
+    $b->setCod_usuario($cod_usuario);
+    $b->setCod_unidade($cod_unidade);
     $b->setSituacao($situacao);
-    $resultado = $b->excluirBeneficiario();
-    $mensagem = 'Beneficiário desativado com sucesso.';
-} else if ($situacao == 0) {
-    // Ativar beneficiário
-    $situacao = 1;
-    $b->setSituacao($situacao);
-    $resultado = $b->incluirBeneficiario();
-    $mensagem = 'Beneficiário ativado com sucesso.';
-}
 
-// Retornar resposta em formato JSON para processamento AJAX
-if ($resultado) {
-    echo json_encode(['status' => 'success', 'message' => $mensagem, 'nova_situacao' => $situacao]);
-} else {
-    echo json_encode(['status' => 'error', 'message' => 'Erro ao alterar situação do beneficiário.']);
+    if ($situacao === 1) {
+        // Inserir beneficiário na cesta
+        $b->incluirBeneficiario();
+        echo json_encode([
+            'success' => true,
+            'message' => 'Beneficiário inserido na cesta com sucesso.'
+        ]);
+    } elseif ($situacao === 0) {
+        // Remover beneficiário da cesta
+        $b->excluirBeneficiario();
+        echo json_encode([
+            'success' => true,
+            'message' => 'Beneficiário removido da cesta com sucesso.'
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Valor de situação inválido.'
+        ]);
+    }
+} catch (Throwable $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro no servidor: ' . $e->getMessage()
+    ]);
 }

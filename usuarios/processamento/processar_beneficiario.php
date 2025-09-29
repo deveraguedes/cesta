@@ -91,12 +91,8 @@ try {
 
     // Controle de nível: apenas nível 1 define categoria
     if (!empty($_POST['cod_categoria']) && ($_SESSION['int_nivel'] ?? 0) == 1) {
-        $categoria = new Categoria();
-        $categoriaObj = $categoria->buscarPorId($_POST['cod_categoria']);
-        if ($categoriaObj) {
-            $beneficiario->setCategoria($categoriaObj['cod_categoria']);
-        }
-    }
+    $beneficiario->setCategoria($_POST['cod_categoria']);
+}
 
     // Inserir beneficiário
     if ($beneficiario->inserirBeneficiario()) {
