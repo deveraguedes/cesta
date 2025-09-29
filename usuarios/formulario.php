@@ -185,14 +185,20 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                 </div>
                 <div class="form-group">
                   <label for="cod_unidade">Unidade</label>
-                  <select name="cod_unidade" id="cod_unidade" class="combobox form-control" required>
-                    <option value="">Selecione ou digite</option>
-                    <?php foreach ($unidades as $row_unidade): ?>
-                      <option value="<?php echo $row_unidade['cod_unidade']; ?>">
-                        <?php echo $row_unidade['vch_unidade']; ?>
-                      </option>
-                    <?php endforeach; ?>
-                  </select>
+                  <?php if ($currentLevel === 2 || $currentLevel === 3): ?>
+                    <!-- Users with level 2 or 3 can only add users to their own unidade. Show it read-only and submit via hidden field. -->
+                    <input type="text" class="form-control" value="<?= htmlspecialchars($unidadeMap[(int)($_SESSION['cod_unidade'] ?? 0)] ?? 'Unidade') ?>" disabled>
+                    <input type="hidden" name="cod_unidade" id="cod_unidade" value="<?= htmlspecialchars((int)($_SESSION['cod_unidade'] ?? 0)) ?>">
+                  <?php else: ?>
+                    <select name="cod_unidade" id="cod_unidade" class="combobox form-control" required>
+                      <option value="">Selecione ou digite</option>
+                      <?php foreach ($unidades as $row_unidade): ?>
+                        <option value="<?php echo $row_unidade['cod_unidade']; ?>">
+                          <?php echo $row_unidade['vch_unidade']; ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                  <?php endif; ?>
                 </div>
               </div>
 
@@ -228,7 +234,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
             // Mensagens fixas
             $alerts = [
-              1 => ['success', 'Sucesso!',       'Verifique seu e-mail e conclua o cadastro.'],
+              1 => ['success', 'Sucesso!',       'Cadastro realizado com sucesso.'],
               2 => ['danger',  'Falha!',         'CPF/login já cadastrado.'],
               3 => ['danger',  'Falha!',         'Há campo(s) obrigatório(s) em branco.'],
               4 => ['danger',  'Falha!',         "Usuario já cadastrado em {$unidadename}."],
@@ -322,6 +328,15 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                 <div class="form-group">
                   <label for="editLogin">Login</label>
                   <input type="text" id="editLogin" name="vch_login" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="editIntNivel">Nível de Acesso</label>
+                  <select id="editIntNivel" name="int_nivel" class="form-control">
+                    <option value="1">Administrador</option>
+                    <option value="2">Usuário Padrão</option>
+                    <option value="3">Sedes</option>
+                  </select>
                 </div>
 
                 <div class="form-group">
@@ -509,7 +524,11 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                     $modal.find('#editCodUsuario').val(u.cod_usuario);
                     $modal.find('#editNome').val(u.vch_nome);
                     $modal.find('#editLogin').val(u.vch_login);
-                    $modal.find('#editUnidade').val(u.cod_unidade);
+                      $modal.find('#editUnidade').val(u.cod_unidade);
+                      // set access level if provided
+                      if (u.int_nivel !== undefined && $modal.find('#editIntNivel').length) {
+                        $modal.find('#editIntNivel').val(String(u.int_nivel));
+                      }
                     // clear password inputs
                     $modal.find('#editSenha, #editSenhaConfirm').val('');
 

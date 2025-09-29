@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-  // Enforce unidade for int_nivel 2 users
-  if (isset($_SESSION['int_level']) && (int)$_SESSION['int_level'] === 2) {
+  // Enforce unidade for int_nivel 2 or 3 users: they can only create users in their own unidade
+  if (isset($_SESSION['int_level']) && ((int)$_SESSION['int_level'] === 2 || (int)$_SESSION['int_level'] === 3)) {
     $_POST['cod_unidade'] = (int)$_SESSION['cod_unidade'];
   }
   $usuario = new Usuario();

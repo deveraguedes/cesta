@@ -29,8 +29,9 @@ try {
     $data = [
       'vch_nome'    => $_POST['vch_nome'] ?? '',
       'vch_login'   => $_POST['vch_login'] ?? '',
-      'cod_unidade' => $_POST['cod_unidade'] ?? 0,
-      'vch_senha'   => $_POST['vch_senha'] ?? ''
+            'cod_unidade' => $_POST['cod_unidade'] ?? 0,
+            'vch_senha'   => $_POST['vch_senha'] ?? '',
+            'int_nivel'   => isset($_POST['int_nivel']) ? (int)$_POST['int_nivel'] : null
     ];
 
     if (!$cod) {

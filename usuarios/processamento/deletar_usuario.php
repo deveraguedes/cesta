@@ -32,6 +32,25 @@ if (!$cod) {
 }
 
 // 4) chama o método deletar()
+// 4) Enforce unidade restriction for level 2/3: they can only delete users in their unidade
+if (isset($_SESSION['int_level']) && ((int)$_SESSION['int_level'] === 2 || (int)$_SESSION['int_level'] === 3)) {
+  // fetch target user's unidade
+  $pdo = Database::conexao();
+  $stmt = $pdo->prepare('SELECT cod_unidade FROM beneficiario.usuario WHERE cod_usuario = :cod');
+  $stmt->execute([':cod' => $cod]);
+  $targetUn = $stmt->fetchColumn();
+  if ($targetUn === false) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'error' => 'Usuário não encontrado']);
+    exit;
+  }
+  if ((int)$targetUn !== (int)($_SESSION['cod_unidade'] ?? 0)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Permissão negada']);
+    exit;
+  }
+}
+
 if (!$u->deletar($cod)) {
   http_response_code(500);
   echo json_encode(['success' => false, 'error' => 'Falha ao excluir']);

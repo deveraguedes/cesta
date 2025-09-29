@@ -32,13 +32,20 @@ $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
 $c = new Categoria();
-if ($int_nivel == 1) {
+// Allow administrators (1) and sedes (3) to manage categories
+if ($int_nivel == 1 || $int_nivel == 3) {
   $c->criarCategoriasPadrao();
   $categorias = $c->listarCategorias();
 }
 
 /* ====== PROCESSA SALVAR CATEGORIA ====== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $_POST['cod_categoria'])) {
+  // Only administrators (1) or sedes (3) may change categories
+  if (!($int_nivel == 1 || $int_nivel == 3)) {
+    echo "<script>alert('Permissão negada para alterar categoria'); window.location='beneficiario.php';</script>";
+    exit;
+  }
+
   $cod_beneficiario = (int) $_POST['cod_beneficiario'];
   $cod_categoria = (int) $_POST['cod_categoria'];
 
@@ -135,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
           <li class="nav-item"><a href="beneficiario.php" class="nav-link">Beneficiários</a></li>
           <li class="nav-item"><a href="relatorios/relat.php" class="nav-link">Relatórios</a></li>
-          <?php if ($int_nivel == 1): ?>
+          <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
             <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
           <?php endif; ?>
           <?php if ($int_nivel == 1): ?>
@@ -220,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 </select>
               </div>
 
-              <?php if ($_SESSION['int_level'] == 1): ?>
+              <?php if ($_SESSION['int_level'] == 1 || $_SESSION['int_level'] == 3): ?>
                 <div class="form-group">
                   <label for="cod_categoria">Categoria</label>
                   <select name="cod_categoria" id="cod_categoria" class="form-control">
@@ -268,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
               <th>Localidade</th>
               <th>Endereço</th>
               <th>Tipo de Beneficiário</th>
-              <?php if ($int_nivel == 1): ?><th>Categoria</th><?php endif; ?>
+              <?php if ($int_nivel == 1 || $int_nivel == 3): ?><th>Categoria</th><?php endif; ?>
               <th>Situação</th>
               <th>Ações</th>
             </tr>
@@ -283,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 <td><?= htmlspecialchars($row["localidade"]); ?></td>
                 <td><?= htmlspecialchars($row["endereco"]); ?></td>
                 <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
-                <?php if ($int_nivel == 1): ?>
+                <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
                   <td>
                     <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
                     <a href="#" class="btn btn-sm btn-warning mt-1"

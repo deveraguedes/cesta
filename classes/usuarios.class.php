@@ -54,7 +54,8 @@ class Usuario
         $this->vchSenha     = $this->generateSenhaHash($data['password']);
 
         // Set intNivel from form if present, else default to 2
-        if (isset($data['int_nivel']) && ($data['int_nivel'] == 1 || $data['int_nivel'] == 2)) {
+        // Allow levels: 1 (admin), 2 (usuário), 3 (sedes)
+        if (isset($data['int_nivel']) && in_array((int)$data['int_nivel'], [1,2,3], true)) {
             $this->intNivel = (int)$data['int_nivel'];
         } else {
             $this->intNivel = 2;
@@ -251,6 +252,11 @@ class Usuario
         // 6) Se veio senha, gera hash e adiciona ao UPDATE
         if (!empty($data['vch_senha'])) {
             $fields['vch_senha'] = $this->generateSenhaHash($data['vch_senha']);
+        }
+
+        // allow updating access level if provided and valid
+        if (isset($data['int_nivel']) && in_array((int)$data['int_nivel'], [1,2,3], true)) {
+            $fields['int_nivel'] = (int)$data['int_nivel'];
         }
 
         // 7) Constrói dinamicamente o SET
