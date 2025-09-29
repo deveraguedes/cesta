@@ -24,6 +24,10 @@ $perPage = 50;
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
 
+// Provide data for the modal form (types and neighborhoods)
+$tipos = $b->exibirTipo();
+$bairros = $b->exibirBairro();
+
 $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
@@ -106,7 +110,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
     }
   </style>
 
-  <script src="js/beneficiario.js"></script>
+  <!-- Global numeric-only helper for inline onkeypress handlers -->
+  <script>
+    function somenteNumeros(e) {
+      const charCode = e.charCode ? e.charCode : e.keyCode;
+      if (charCode !== 8 && charCode !== 9) {
+        if (charCode < 48 || charCode > 57) return false;
+      }
+      return true;
+    }
+  </script>
 </head>
 
 <body>
@@ -143,7 +156,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
     <div class="modal fade" id="modalBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiarioLabel">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-          <!-- Conteúdo será carregado via AJAX -->
+          <div class="modal-header">
+            <h4 class="modal-title">Inserir Beneficiário</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <!-- ALERTA DINÂMICO -->
+            <div id="alertBeneficiario" class="alert d-none"></div>
+
+            <form id="formBeneficiario" name="form" method="POST" action="processamento/processar_beneficiario.php" data-toggle="validator" role="form">
+              <input type="hidden" id="cod_usuario" name="cod_usuario" value="<?php echo htmlspecialchars($cod_usuario); ?>">
+              <input type="hidden" id="cod_unidade" name="cod_unidade" value="<?php echo htmlspecialchars($cod_unidade); ?>">
+
+              <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label for="nis">NIS</label>
+                <input type="text" id="nis" name="nis" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" class="form-control" name="nome" required>
+              </div>
+
+              <div class="form-group">
+                <label for="cod_bairro">Bairro</label>
+                <select name="cod_bairro" id="cod_bairro" class="form-control" required>
+                  <option value="">Selecione o bairro</option>
+                  <?php while ($bairro = $bairros->fetch(PDO::FETCH_ASSOC)): ?>
+                    <option value="<?= $bairro['cod_bairro'] ?>"><?= htmlspecialchars($bairro['vch_bairro']) ?></option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="endereco">Endereço</label>
+                <input type="text" id="endereco" class="form-control" name="endereco" required>
+              </div>
+
+              <div class="form-group">
+                <label for="complemento">Complemento</label>
+                <input type="text" id="complemento" class="form-control" name="complemento">
+              </div>
+
+              <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" class="form-control" name="telefone">
+              </div>
+
+              <div class="form-group">
+                <label for="cod_tipo">Tipo de Beneficiário</label>
+                <select name="cod_tipo" id="cod_tipo" class="form-control" required>
+                  <option value="">Selecione o tipo</option>
+                  <?php while ($tipo = $tipos->fetch(PDO::FETCH_ASSOC)): ?>
+                    <option value="<?= $tipo['cod_tipo'] ?>">
+                      <?= htmlspecialchars($tipo['vch_tipo']) ?>
+                    </option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+
+              <?php if ($_SESSION['int_level'] == 1): ?>
+                <div class="form-group">
+                  <label for="cod_categoria">Categoria</label>
+                  <select name="cod_categoria" id="cod_categoria" class="form-control">
+                    <option value="">Selecione a categoria</option>
+                    <?php
+                    $c = new Categoria();
+                    $categorias = $c->listarCategorias();
+                    foreach ($categorias as $cat):
+                    ?>
+                      <option value="<?= $cat['cod_categoria'] ?>">
+                        <?= htmlspecialchars($cat['vch_categoria']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              <?php endif; ?>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -301,9 +401,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="js/beneficiario.js"></script>
+
+  <!-- Load local Inputmask shim (provides minimal live CPF formatting) and the modal behavior script -->
+  <script src="vendor/inputmask/cpf-local-mask.js"></script>
+  <script src="js/beneficiario-modal.js"></script>
+
   <script>
     $(document).ready(function() {
-      console.log('Inicializando DataTables e configurações...');
+    $('#tabela').DataTable({
+      paging: false, // desabilita paginação do DataTables
+      searching: true,
+      ordering: true,
+      language: {
+  // Use local copy to avoid cross-origin XHR and CDN availability issues
+  url: "vendor/datatables/plug-ins/1.13.6/i18n/pt-BR.json"
+      }
+    });
 
       $('#tabela').DataTable({
         paging: false, // desabilita paginação do DataTables
