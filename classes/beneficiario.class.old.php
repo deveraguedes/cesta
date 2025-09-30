@@ -481,9 +481,9 @@ class Beneficiario
                         WHERE ";
             
             if ($int_nivel == "1") {
-                $sql = $sql_base . $where . " AND situacao < 2 AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf) AND b.nis NOT IN (SELECT f.nis FROM beneficiario.folha_p_2023 f WHERE f.nis = b.nis AND f.nis IS NOT NULL) ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
+                $sql = $sql_base . $where . " AND situacao < 2 AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha f WHERE f.cpf = b.cpf) AND b.nis NOT IN (SELECT f.nis FROM beneficiario.folha f WHERE f.nis = b.nis AND f.nis IS NOT NULL) ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
             } else {
-                $sql = $sql_base . $where . " AND b.cod_unidade = :cod_unidade AND situacao < 2 AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf) AND b.nis NOT IN (SELECT f.nis FROM beneficiario.folha_p_2023 f WHERE f.nis = b.nis AND f.nis IS NOT NULL) ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
+                $sql = $sql_base . $where . " AND b.cod_unidade = :cod_unidade AND situacao < 2 AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha f WHERE f.cpf = b.cpf) AND b.nis NOT IN (SELECT f.nis FROM beneficiario.folha f WHERE f.nis = b.nis AND f.nis IS NOT NULL) ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
             }
 
             $consulta = $pdo->prepare($sql);
@@ -514,7 +514,7 @@ class Beneficiario
                         INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
                         INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
                         WHERE (situacao = 0 OR situacao = 1) 
-                        AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf)
+                        AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha f WHERE f.cpf = b.cpf)
                         ORDER BY situacao ASC, nome ASC 
                         LIMIT :limite OFFSET :inicio"; 
             } else {
@@ -524,7 +524,7 @@ class Beneficiario
                         INNER JOIN beneficiario.bairro ba ON b.cod_bairro = ba.cod_bairro
                         INNER JOIN beneficiario.tipo_beneficiario tb ON b.cod_tipo = tb.cod_tipo
                         WHERE b.cod_unidade = :cod_unidade AND (situacao = 0 OR situacao = 1) 
-                        AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha_p_2023 f WHERE f.cpf = b.cpf)
+                        AND b.cpf NOT IN (SELECT f.cpf FROM beneficiario.folha f WHERE f.cpf = b.cpf)
                         ORDER BY situacao ASC, nome ASC 
                         LIMIT :limite OFFSET :inicio";
             }
@@ -665,7 +665,7 @@ class Beneficiario
                      FROM beneficiario.cad c 
                      WHERE c.nis = $nis 
                      and exists (select f.nis 
-                                from folha_p_2023 f inner join beneficiario.cad ca on f.nis = ca.nis
+                                from folha f inner join beneficiario.cad ca on f.nis = ca.nis
                                 where ca.cod_fam = c.cod_fam ) ";
             $consulta = $pdo->prepare($sql);
             $consulta->execute();
@@ -683,7 +683,7 @@ class Beneficiario
                  from beneficiario.cad c 
                  where c.cpf = '$cpf' 
                  and exists (select f.cpf 
-                                 from beneficiario.folha_p_2023 f inner join beneficiario.cad ca on f.cpf = CAST(ca.cpf AS bigint)
+                                 from beneficiario.folha f inner join beneficiario.cad ca on f.cpf = CAST(ca.cpf AS bigint)
                                  where ca.cod_fam = c.cod_fam ) ";
             $consulta = $pdo->prepare($sql);
             $consulta->execute();
@@ -701,7 +701,7 @@ class Beneficiario
                  from beneficiario.cad c 
                  where c.cpf = $cpf 
                  and exists (select f.cpf 
-                                 from folha_p_2023 f inner join beneficiario.cad ca on f.cpf = ca.cpf
+                                 from folha f inner join beneficiario.cad ca on f.cpf = ca.cpf
                                  where ca.cod_fam = c.cod_fam ) ";
 
             $consulta = $pdo->prepare($sql);
@@ -716,7 +716,7 @@ class Beneficiario
     {
         try {
             $pdo = Database::conexao();
-            $sql = "SELECT * FROM beneficiario.folha_p_2023 where nis = $nis ";
+            $sql = "SELECT * FROM beneficiario.folha where nis = $nis ";
 
             $consulta = $pdo->prepare($sql);
             $consulta->execute();
@@ -745,7 +745,7 @@ class Beneficiario
     {
         try {
             $pdo = Database::conexao();
-            $sql = "SELECT * FROM beneficiario.folha_p_2023 where cpf = '$cpf' ";
+            $sql = "SELECT * FROM beneficiario.folha where cpf = '$cpf' ";
 
             $consulta = $pdo->prepare($sql);
             $consulta->execute();
@@ -759,7 +759,7 @@ class Beneficiario
     {
         try {
             $pdo = Database::conexao();
-            $sql = "SELECT * FROM beneficiario.folha_p_2023 where cpf = $cpf ";
+            $sql = "SELECT * FROM beneficiario.folha where cpf = $cpf ";
 
             $consulta = $pdo->prepare($sql);
             $consulta->execute();

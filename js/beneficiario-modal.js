@@ -214,19 +214,46 @@
 
       // Mostrar indicador de carregamento
       disableSubmit(true);
+      const originalSubmitHtml = $submitBtn.html();
       $submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
 
-      // Ensure digits-only CPF value is submitted
+      // Garantir CPF apenas dígitos antes de enviar
       try { if ($cpf.length) $cpf.val(getCpfDigits()); } catch(e){}
 
-      // Enviar formulário diretamente (bypass our preventDefault handler safely)
-      try {
-        $form.off('submit');
-        $form.get(0).submit();
-      } catch(e) {
-        // Fallback
-        $form.off('submit').submit();
-      }
+      // Enviar formulário via AJAX para receber JSON e mostrar mensagem na página
+      const actionUrl = ($form.attr('action') || 'usuarios/processamento/processar_beneficiario.php');
+      $.ajax({
+        url: actionUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: $form.serialize()
+      }).done(function(resp){
+        // Restaurar botão e habilitar novamente
+        $submitBtn.html(originalSubmitHtml);
+        disableSubmit(false);
+
+        if (resp && resp.success) {
+          const isUpdate = !!$form.find('[name="MM_action"][value="2"]').length || !!($form.find('[name="cod_beneficiario"]').val() || '').trim();
+          const successMsg = resp.message || (isUpdate ? 'Beneficiário atualizado com sucesso' : 'Beneficiário cadastrado com sucesso');
+          try { if (typeof showPageAlert === 'function') showPageAlert('success', successMsg); } catch(e){}
+
+          // Fechar modal (se dentro de um modal) e atualizar a lista
+          const $modal = $form.closest('.modal');
+          if ($modal && $modal.length) {
+            try { $modal.modal('hide'); } catch(e){}
+          }
+          setTimeout(function(){ try { location.reload(); } catch(e){} }, 1200);
+        } else {
+          const msg = (resp && resp.message) ? resp.message : 'Erro ao processar a solicitação.';
+          try { if (typeof showPageAlert === 'function') showPageAlert('danger', msg); } catch(e){}
+          // manter modal aberto para correções; erros inline já são tratados acima
+        }
+      }).fail(function(xhr, status){
+        $submitBtn.html(originalSubmitHtml);
+        disableSubmit(false);
+        const msg = 'Erro na requisição: ' + (xhr && xhr.responseText ? xhr.responseText : status);
+        try { if (typeof showPageAlert === 'function') showPageAlert('danger', msg); } catch(e){}
+      });
       return true;
     }
 

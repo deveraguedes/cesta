@@ -24,7 +24,8 @@ $perPage = 50;
 
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
-
+ 
+print_r($beneficiarios);
 // Calculate total and active beneficiaries to determine available spots
 $pdo = Database::conexao();
 

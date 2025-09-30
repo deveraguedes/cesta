@@ -136,8 +136,8 @@ try {
 
     // Check CPF duplicates (exclui o próprio registro quando for atualização)
     if ($cpf_digits !== '') {
-        // Check in folha_p_2023 first
-    $sf = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
+        // Check in folha first
+    $sf = $pdo->prepare("SELECT 1 FROM beneficiario.folha WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
         $sf->bindValue(':cpf', $cpf_digits);
         $sf->execute();
         if ($sf->fetch()) {
@@ -174,8 +174,8 @@ try {
 
     // Check NIS duplicates (exclui o próprio registro quando for atualização)
     if ($nis_digits !== '') {
-        // Check in folha_p_2023 first
-    $sf2 = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(nis AS text), '\\D', '', 'g') = :nis LIMIT 1");
+        // Check in folha first
+    $sf2 = $pdo->prepare("SELECT 1 FROM beneficiario.folha WHERE regexp_replace(CAST(nis AS text), '\\D', '', 'g') = :nis LIMIT 1");
         $sf2->bindValue(':nis', $nis_digits);
         $sf2->execute();
         if ($sf2->fetch()) {
