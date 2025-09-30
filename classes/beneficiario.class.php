@@ -222,6 +222,18 @@ public function inserirBeneficiario() {
         if (empty($this->cod_tipo)) {
             throw new Exception("O campo 'tipo' é obrigatório.");
         }
+        
+        // Verificar se há saldo disponível quando situacao = 1 (incluído na cesta)
+        if ($this->situacao == 1 && !empty($this->cod_unidade)) {
+            $stmt = $this->db->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
+            $stmt->bindValue(':cod_unidade', $this->cod_unidade, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$result || $result['saldo'] <= 0) {
+                throw new Exception("Não há vagas disponíveis para esta unidade.");
+            }
+        }
 
         // Query de inserção
         $sql = "INSERT INTO beneficiario.beneficiario 
@@ -281,10 +293,10 @@ public function inserirBeneficiario() {
             throw new Exception("Falha ao inserir beneficiário. Erro PDO: " . $errorInfo[2]);
         }
 
-        // . Atualizar saldo da unidade (se informado)
-        if (!empty($this->cod_unidade)) {
-            $sqlSaldo = "UPDATE saldo SET saldo = saldo + 1 WHERE cod_unidade = :cod_unidade";
-            $stmtSaldo = $this->con->prepare($sqlSaldo);
+        // Atualizar saldo da unidade quando situacao = 1 (incluído na cesta)
+        if (!empty($this->cod_unidade) && $this->situacao == 1) {
+            $sqlSaldo = "UPDATE beneficiario.saldo_unidade SET saldo = saldo - 1 WHERE cod_unidade = :cod_unidade";
+            $stmtSaldo = $this->db->prepare($sqlSaldo);
             $stmtSaldo->bindValue(':cod_unidade', $this->cod_unidade);
 
             if (!$stmtSaldo->execute()) {

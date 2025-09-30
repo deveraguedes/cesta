@@ -155,45 +155,24 @@
       } catch(e) { console.error('Erro ao verificar duplicados', e); disableSubmit(false); return true; }
     }
 
-    async function verifica() {
+    function verifica() {
       const nis = ($nis.val() || '').replace(/\D/g, '').trim();
       const cpf = getCpfDigits();
-      if (!nis || !cpf) { alert('NIS e CPF devem ser informados!'); if (!nis) $nis.focus(); else $cpf.focus(); return false; }
+      if (!cpf) { alert('CPF deve ser informado!'); $cpf.focus(); return false; }
       if (!verificarCPF(cpf)) { alert('CPF inválido!'); $cpf.focus(); return false; }
       const campos = ['nome','cod_bairro','endereco','cod_tipo']; const labels = ['Nome','Bairro','Endereço','Tipo de Beneficiário'];
       for (let i=0;i<campos.length;i++){ if (!$('#'+campos[i]).val()){ alert(labels[i]+' deve ser informado!'); $('#'+campos[i]).focus(); return false; } }
-      const okCpf = await checkExists('cpf'); const okNis = await checkExists('nis'); if (!okCpf || !okNis) return false;
+      
+      // Mostrar indicador de carregamento
+      disableSubmit(true);
+      $submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
+      
       // Inputmask is configured to remove mask on submit, but to be safe ensure digits-only
       try { $cpf.val( getCpfDigits() ); } catch(e){}
-      $.post('processamento/processar_beneficiario.php', $form.serialize(), function(resp){
-        try {
-          const result = typeof resp === 'string' ? JSON.parse(resp) : resp;
-          if (result && result.success) {
-            showModalAlert('Beneficiário cadastrado com sucesso!', 'success');
-            setTimeout(function(){ $('#modalBeneficiario').modal('hide'); location.reload(); }, 900);
-          } else {
-            const msg = (result && result.message) ? result.message : 'Erro ao cadastrar beneficiário';
-            // If server provided unidade info, append it cleanly
-            if (result) {
-              const unitName = result.unidade || result.unidade_nome || null;
-              const unitCode = result.unidade_cod || result.cod_unidade || null;
-              if (unitName) {
-                showModalAlert(msg + ' (unidade: ' + unitName + ')', 'danger');
-              } else if (unitCode) {
-                showModalAlert(msg + ' (unidade: ' + unitCode + ')', 'danger');
-              } else {
-                showModalAlert(msg, 'danger');
-              }
-            } else {
-              showModalAlert(msg, 'danger');
-            }
-            disableSubmit(true);
-          }
-        } catch (err) {
-          showModalAlert('Erro ao processar resposta do servidor', 'danger');
-        }
-      }).fail(function(){ showModalAlert('Erro ao enviar formulário', 'danger'); });
-      return false;
+      
+      // Enviar formulário diretamente
+      $form.off('submit').submit();
+      return true;
     }
 
     // debounce

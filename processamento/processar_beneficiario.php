@@ -164,6 +164,7 @@ try {
     $beneficiario->setTelefone($_POST['telefone'] ?? null);
     $beneficiario->setCod_tipo($_POST['cod_tipo'] ?? null);
     $beneficiario->setCod_usuario($_POST['cod_usuario'] ?? ($_SESSION['user_id'] ?? null));
+    $beneficiario->setCod_unidade($submitted_unidade); // Definir a unidade do usuário
     $beneficiario->setSituacao(1); // Ativo por padrão
 
     // Se for admin e enviou categoria
