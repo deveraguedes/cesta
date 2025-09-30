@@ -52,6 +52,36 @@ function validate_pis($pis) {
 }
 
 try {
+    // Helpers para normalização de entradas
+    $nullIfEmpty = function($v) {
+        if (!isset($v)) return null;
+        if (is_string($v)) {
+            $t = trim($v);
+            return $t === '' ? null : $t;
+        }
+        return $v === '' ? null : $v;
+    };
+    $intOrNull = function($v) {
+        if (!isset($v)) return null;
+        if (is_string($v)) {
+            $t = trim($v);
+            if ($t === '' || !is_numeric($t)) return null;
+            return (int)$t;
+        }
+        return is_numeric($v) ? (int)$v : null;
+    };
+
+    // Determinar se é atualização (alterar) ou inserção (inserir)
+    $isUpdate = false;
+    $currentId = null;
+    if (isset($_POST['MM_action']) && (string)$_POST['MM_action'] === '2') {
+        $isUpdate = true;
+    }
+    if (isset($_POST['cod_beneficiario']) && $_POST['cod_beneficiario'] !== '') {
+        $currentId = (int) $_POST['cod_beneficiario'];
+        if ($currentId > 0) $isUpdate = true;
+    }
+
     // Basic server-side validation — require at least one identifier (CPF or NIS)
     $cpf_raw = $_POST['cpf'] ?? '';
     $nis_raw = $_POST['nis'] ?? '';
@@ -104,7 +134,7 @@ try {
         return $r ? $r['vch_unidade'] : null;
     };
 
-    // Check CPF duplicates
+    // Check CPF duplicates (exclui o próprio registro quando for atualização)
     if ($cpf_digits !== '') {
         // Check in folha_p_2023 first
     $sf = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
@@ -116,8 +146,15 @@ try {
         }
 
         // Check in beneficiario table
-    $sb = $pdo->prepare("SELECT cod_unidade FROM beneficiario.beneficiario WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
+        $sqlCpf = "SELECT cod_beneficiario, cod_unidade
+                    FROM beneficiario.beneficiario
+                   WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf" . ($isUpdate ? " AND cod_beneficiario <> :id" : "") . "
+                   LIMIT 1";
+        $sb = $pdo->prepare($sqlCpf);
         $sb->bindValue(':cpf', $cpf_digits);
+        if ($isUpdate && $currentId) {
+            $sb->bindValue(':id', $currentId, PDO::PARAM_INT);
+        }
         $sb->execute();
         if ($row = $sb->fetch(PDO::FETCH_ASSOC)) {
             $found_unidade = isset($row['cod_unidade']) ? (int)$row['cod_unidade'] : null;
@@ -135,7 +172,7 @@ try {
         }
     }
 
-    // Check NIS duplicates
+    // Check NIS duplicates (exclui o próprio registro quando for atualização)
     if ($nis_digits !== '') {
         // Check in folha_p_2023 first
     $sf2 = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(nis AS text), '\\D', '', 'g') = :nis LIMIT 1");
@@ -147,8 +184,15 @@ try {
         }
 
         // Check in beneficiario table
-    $sb2 = $pdo->prepare("SELECT cod_unidade FROM beneficiario.beneficiario WHERE regexp_replace(CAST(COALESCE(nis::text, '') AS text), '\\D', '', 'g') = :nis LIMIT 1");
+        $sqlNis = "SELECT cod_beneficiario, cod_unidade
+                    FROM beneficiario.beneficiario
+                   WHERE regexp_replace(CAST(COALESCE(nis::text, '') AS text), '\\D', '', 'g') = :nis" . ($isUpdate ? " AND cod_beneficiario <> :id" : "") . "
+                   LIMIT 1";
+        $sb2 = $pdo->prepare($sqlNis);
         $sb2->bindValue(':nis', $nis_digits);
+        if ($isUpdate && $currentId) {
+            $sb2->bindValue(':id', $currentId, PDO::PARAM_INT);
+        }
         $sb2->execute();
         if ($row = $sb2->fetch(PDO::FETCH_ASSOC)) {
             $found_unidade = isset($row['cod_unidade']) ? (int)$row['cod_unidade'] : null;
@@ -166,31 +210,83 @@ try {
 
     $beneficiario = new Beneficiario();
 
-    // Atribuir valores do formulário
-    $beneficiario->setNis($_POST['nis'] ?? null);
-    $beneficiario->setCpf($_POST['cpf'] ?? null);
-    $beneficiario->setNome($_POST['nome'] ?? null);
-    $beneficiario->setCod_bairro($_POST['cod_bairro'] ?? null);
-    $beneficiario->setEndereco($_POST['endereco'] ?? null);
-    $beneficiario->setComplemento($_POST['complemento'] ?? null);
-    $beneficiario->setTelefone($_POST['telefone'] ?? null);
-    $beneficiario->setCod_tipo($_POST['cod_tipo'] ?? null);
-    $beneficiario->setCod_usuario($_POST['cod_usuario'] ?? ($_SESSION['user_id'] ?? null));
-    $beneficiario->setCod_unidade($submitted_unidade); // Definir a unidade do usuário
+    // Normalizar e atribuir valores do formulário
+    $beneficiario->setNis($nis_digits !== '' ? $nis_digits : null);
+    $beneficiario->setCpf($cpf_digits !== '' ? $cpf_digits : null);
+    $beneficiario->setNome(trim($_POST['nome'] ?? ''));
+    $beneficiario->setCod_bairro($intOrNull($_POST['cod_bairro'] ?? null));
+    $beneficiario->setLocalidade($nullIfEmpty($_POST['localidade'] ?? null));
+    $beneficiario->setEndereco(trim($_POST['endereco'] ?? ''));
+    $beneficiario->setComplemento($nullIfEmpty($_POST['complemento'] ?? null));
+    $beneficiario->setTelefone($nullIfEmpty($_POST['telefone'] ?? null));
+    $beneficiario->setCod_tipo($intOrNull($_POST['cod_tipo'] ?? null));
+    $beneficiario->setCod_usuario($intOrNull($_POST['cod_usuario'] ?? ($_SESSION['user_id'] ?? null)));
+    $beneficiario->setCod_unidade($intOrNull($submitted_unidade)); // Definir a unidade do usuário
     $beneficiario->setSituacao(1); // Ativo por padrão
 
     // Controle de nível: apenas nível 1 define categoria
-    if (!empty($_POST['cod_categoria']) && ($user_level == 1)) {
-        $beneficiario->setCategoria($_POST['cod_categoria']);
+    if ($user_level == 1) {
+        $beneficiario->setCategoria($intOrNull($_POST['cod_categoria'] ?? null));
     }
 
-    // Inserir beneficiário
-    if ($beneficiario->inserirBeneficiario()) {
-        echo json_encode(['success' => true, 'message' => 'Beneficiário cadastrado com sucesso']);
+    // Validações servidor para campos obrigatórios da inclusão/alteração
+    if (empty($beneficiario->getNome())) {
+        echo json_encode(['success' => false, 'message' => "Nome do beneficiário é obrigatório."]);
         exit;
+    }
+    if ($beneficiario->getCod_bairro() === null) {
+        echo json_encode(['success' => false, 'message' => "Bairro é obrigatório."]);
+        exit;
+    }
+    if ($beneficiario->getCod_tipo() === null) {
+        echo json_encode(['success' => false, 'message' => "Tipo de beneficiário é obrigatório."]);
+        exit;
+    }
+    if (empty($_POST['endereco'] ?? '')) {
+        echo json_encode(['success' => false, 'message' => "Endereço é obrigatório."]);
+        exit;
+    }
+
+    // Inserir ou Alterar beneficiário conforme a ação
+    if ($isUpdate) {
+        // Monta array de dados para atualização
+        $dados = [
+            'cod_beneficiario' => $currentId,
+            'nis'             => ($nis_digits !== '' ? $nis_digits : null),
+            'cpf'             => ($cpf_digits !== '' ? $cpf_digits : null),
+            'nome'            => trim($_POST['nome'] ?? ''),
+            'cod_bairro'      => $intOrNull($_POST['cod_bairro'] ?? null),
+            'localidade'      => $nullIfEmpty($_POST['localidade'] ?? null),
+            'cod_usuario'     => $intOrNull($_POST['cod_usuario'] ?? ($_SESSION['user_id'] ?? null)),
+            'dt_cadastro'     => date('Y-m-d'),
+            'cod_unidade'     => $intOrNull($submitted_unidade),
+            'cpf_responsavel' => $nullIfEmpty($_POST['cpf_responsavel'] ?? null),
+            'vch_responsavel' => $nullIfEmpty($_POST['vch_responsavel'] ?? null),
+            'cod_tipo'        => $intOrNull($_POST['cod_tipo'] ?? null),
+            'cep'             => $nullIfEmpty($_POST['cep'] ?? null),
+            'endereco'        => trim($_POST['endereco'] ?? ''),
+            'complemento'     => $nullIfEmpty($_POST['complemento'] ?? null),
+            'telefone'        => $nullIfEmpty($_POST['telefone'] ?? null),
+            'cod_categoria'   => ($user_level == 1 ? $intOrNull($_POST['cod_categoria'] ?? null) : null),
+            'situacao'        => 1,
+        ];
+
+        if ($beneficiario->alterarBeneficiario($dados, (int)$user_level)) {
+            echo json_encode(['success' => true, 'message' => 'Beneficiário atualizado com sucesso']);
+            exit;
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erro ao atualizar beneficiário', 'dados' => $dados]);
+            exit;
+        }
     } else {
-        echo json_encode(['success' => false, 'message' => 'Erro ao cadastrar beneficiário']);
-        exit;
+        // Inserção
+        if ($beneficiario->inserirBeneficiario()) {
+            echo json_encode(['success' => true, 'message' => 'Beneficiário cadastrado com sucesso']);
+            exit;
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erro ao cadastrar beneficiário']);
+            exit;
+        }
     }
 
 } catch (Throwable $e) {
