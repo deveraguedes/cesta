@@ -78,7 +78,15 @@ try {
     // --- Duplicate checks (beneficiario list and folha) ---
     // Use digit-only comparisons on DB side via regexp_replace to be robust against formatting
     $pdo = Database::conexao();
-    $submitted_unidade = isset($_POST['cod_unidade']) && $_POST['cod_unidade'] !== '' ? (int) $_POST['cod_unidade'] : ($_SESSION['cod_unidade'] ?? null);
+    // Definir unidade com base no nível do usuário: nível 1 pode escolher, outros usam a unidade da sessão
+    $user_level = $_SESSION['int_level'] ?? ($_SESSION['int_nivel'] ?? null);
+    if ($user_level == 1) {
+        $submitted_unidade = isset($_POST['cod_unidade']) && $_POST['cod_unidade'] !== ''
+            ? (int) $_POST['cod_unidade']
+            : ($_SESSION['cod_unidade'] ?? null);
+    } else {
+        $submitted_unidade = $_SESSION['cod_unidade'] ?? null;
+    }
 
     // Helper to fetch unidade name
     $getUnidadeName = function($cod_unidade) use ($pdo) {
@@ -168,9 +176,9 @@ try {
     $beneficiario->setSituacao(1); // Ativo por padrão
 
     // Controle de nível: apenas nível 1 define categoria
-    if (!empty($_POST['cod_categoria']) && ($_SESSION['int_nivel'] ?? 0) == 1) {
-    $beneficiario->setCategoria($_POST['cod_categoria']);
-}
+    if (!empty($_POST['cod_categoria']) && ($user_level == 1)) {
+        $beneficiario->setCategoria($_POST['cod_categoria']);
+    }
 
     // Inserir beneficiário
     if ($beneficiario->inserirBeneficiario()) {

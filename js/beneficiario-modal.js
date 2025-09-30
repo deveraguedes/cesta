@@ -158,20 +158,47 @@
     function verifica() {
       const nis = ($nis.val() || '').replace(/\D/g, '').trim();
       const cpf = getCpfDigits();
-      if (!cpf) { alert('CPF deve ser informado!'); $cpf.focus(); return false; }
-      if (!verificarCPF(cpf)) { alert('CPF inválido!'); $cpf.focus(); return false; }
-      const campos = ['nome','cod_bairro','endereco','cod_tipo']; const labels = ['Nome','Bairro','Endereço','Tipo de Beneficiário'];
-      for (let i=0;i<campos.length;i++){ if (!$('#'+campos[i]).val()){ alert(labels[i]+' deve ser informado!'); $('#'+campos[i]).focus(); return false; } }
-      
+      // CPF required and must be valid – use stable inline errors, no alerts
+      if (!cpf) {
+        showInlineError('cpf', 'CPF deve ser informado!');
+        $cpf.focus();
+        disableSubmit(false);
+        return false;
+      }
+      if (!verificarCPF(cpf)) {
+        showInlineError('cpf', 'CPF inválido!');
+        $cpf.focus();
+        disableSubmit(false);
+        return false;
+      }
+      const campos = ['nome','cod_bairro','endereco','cod_tipo'];
+      const labels = ['Nome','Bairro','Endereço','Tipo de Beneficiário'];
+      for (let i = 0; i < campos.length; i++) {
+        const $el = $('#'+campos[i]);
+        if (!$el.val()) {
+          // Show inline required-field error in a consistent way
+          showInlineError(campos[i], labels[i]+' deve ser informado!');
+          $el.focus();
+          disableSubmit(false);
+          return false;
+        }
+      }
+
       // Mostrar indicador de carregamento
       disableSubmit(true);
       $submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
-      
-      // Inputmask is configured to remove mask on submit, but to be safe ensure digits-only
-      try { $cpf.val( getCpfDigits() ); } catch(e){}
-      
-      // Enviar formulário diretamente
-      $form.off('submit').submit();
+
+      // Ensure digits-only CPF value is submitted
+      try { $cpf.val(getCpfDigits()); } catch(e){}
+
+      // Enviar formulário diretamente (bypass our preventDefault handler safely)
+      try {
+        $form.off('submit');
+        $form.get(0).submit();
+      } catch(e) {
+        // Fallback
+        $form.off('submit').submit();
+      }
       return true;
     }
 

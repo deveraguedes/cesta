@@ -5,6 +5,7 @@ include_once "classes/usuarios.class.php";
 include_once "classes/login.class.php";
 include_once "classes/beneficiario.class.php";
 include_once "classes/categoria.class.php";
+include_once "classes/unidade.class.php";
 
 $l = new LoginUsuario();
 if ($l->isLoggedIn() && $_SESSION['int_level'] > 0) {
@@ -193,9 +194,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             <!-- ALERTA DINÂMICO -->
             <div id="alertBeneficiario" class="alert d-none"></div>
 
-            <form id="formBeneficiario" name="form" method="POST" action="processamento/processar_beneficiario.php" data-toggle="validator" role="form">
+            <form id="formBeneficiario" name="form" method="POST" action="usuarios/processamento/processar_beneficiario.php" data-toggle="validator" role="form">
               <input type="hidden" id="cod_usuario" name="cod_usuario" value="<?php echo htmlspecialchars($cod_usuario); ?>">
-              <input type="hidden" id="cod_unidade" name="cod_unidade" value="<?php echo htmlspecialchars($cod_unidade); ?>">
+              <?php if ($int_nivel == 1): ?>
+                <div class="form-group">
+                  <label for="cod_unidade">Unidade</label>
+                  <select id="cod_unidade" name="cod_unidade" class="form-control" required>
+                    <?php 
+                      $u = new Unidade();
+                      $unidades = $u->exibirUnidade();
+                      while ($unidade = $unidades->fetch(PDO::FETCH_ASSOC)):
+                    ?>
+                      <option value="<?= $unidade['cod_unidade'] ?>" <?= ($unidade['cod_unidade'] == $cod_unidade) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($unidade['vch_unidade']) ?>
+                      </option>
+                    <?php endwhile; ?>
+                  </select>
+                </div>
+              <?php else: ?>
+                <input type="hidden" id="cod_unidade" name="cod_unidade" value="<?php echo htmlspecialchars($cod_unidade); ?>">
+              <?php endif; ?>
 
               <div class="form-group">
                 <label for="cpf">CPF</label>

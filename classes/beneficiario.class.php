@@ -301,11 +301,11 @@ public function inserirBeneficiario() {
             throw new Exception("Falha ao inserir beneficiário. Erro PDO: " . $errorInfo[2]);
         }
 
-        // . Atualizar saldo da unidade (se informado)
+        // Atualizar saldo da unidade (decrementa 1 vaga ao incluir)
         if (!empty($this->cod_unidade)) {
-            $sqlSaldo = "UPDATE saldo SET saldo = saldo + 1 WHERE cod_unidade = :cod_unidade";
+            $sqlSaldo = "UPDATE beneficiario.saldo_unidade SET saldo = saldo - 1 WHERE cod_unidade = :cod_unidade";
             $stmtSaldo = $this->db->prepare($sqlSaldo);
-            $stmtSaldo->bindValue(':cod_unidade', $this->cod_unidade);
+            $stmtSaldo->bindValue(':cod_unidade', $this->cod_unidade, PDO::PARAM_INT);
 
             if (!$stmtSaldo->execute()) {
                 $errorInfo = $stmtSaldo->errorInfo();
