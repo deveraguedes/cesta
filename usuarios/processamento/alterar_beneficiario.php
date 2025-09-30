@@ -46,11 +46,13 @@ $categorias = $c->listarCategorias();
          <div class="form-group">
             <label for="nis">NIS</label>
             <input type="text" id="nis" class="form-control" name="nis" value="<?php echo $row_beneficiario["nis"]; ?>">
+            <small class="form-text text-muted">Informe NIS ou CPF. Pelo menos um é obrigatório.</small>
          </div>
 
          <div class="form-group">
             <label for="vch_rg">CPF</label>
             <input type="text" id="cpf" class="form-control" name="cpf" value="<?php echo $row_beneficiario["cpf"]; ?>">
+            <small class="form-text text-muted">Informe NIS ou CPF. Pelo menos um é obrigatório.</small>
          </div>
 
          <div class="form-group">

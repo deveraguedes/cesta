@@ -52,24 +52,30 @@ function validate_pis($pis) {
 }
 
 try {
-    // Basic server-side validation
+    // Basic server-side validation — require at least one identifier (CPF or NIS)
     $cpf_raw = $_POST['cpf'] ?? '';
     $nis_raw = $_POST['nis'] ?? '';
+    $cpf_digits = preg_replace('/\D/', '', (string)$cpf_raw);
+    $nis_digits = preg_replace('/\D/', '', (string)$nis_raw);
 
-    // Validate CPF
-    if (!validate_cpf($cpf_raw)) {
+    if ($cpf_digits === '' && $nis_digits === '') {
+        echo json_encode(['success' => false, 'message' => 'Informe NIS ou CPF. Pelo menos um é obrigatório.']);
+        exit;
+    }
+
+    // If CPF provided, it must be valid
+    if ($cpf_digits !== '' && !validate_cpf($cpf_digits)) {
         echo json_encode(['success' => false, 'message' => 'CPF inválido']);
         exit;
     }
 
     // If NIS looks like CPF, reject to avoid swapped fields
-    $nis_digits = preg_replace('/\D/', '', (string)$nis_raw);
-    if (validate_cpf($nis_digits)) {
+    if ($nis_digits !== '' && validate_cpf($nis_digits)) {
         echo json_encode(['success' => false, 'message' => 'NIS parece ser um CPF — verifique se os campos não estão trocados']);
         exit;
     }
 
-    // If NIS is present but does not validate as PIS, warn/reject depending on policy — here we reject invalid format
+    // If NIS provided, it must be valid as PIS
     if ($nis_digits !== '' && !validate_pis($nis_digits)) {
         echo json_encode(['success' => false, 'message' => 'NIS com formato inválido']);
         exit;
@@ -99,7 +105,6 @@ try {
     };
 
     // Check CPF duplicates
-    $cpf_digits = preg_replace('/\D/', '', (string)$cpf_raw);
     if ($cpf_digits !== '') {
         // Check in folha_p_2023 first
     $sf = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(cpf AS text), '\\D', '', 'g') = :cpf LIMIT 1");
@@ -131,7 +136,6 @@ try {
     }
 
     // Check NIS duplicates
-    $nis_digits = preg_replace('/\D/', '', (string)$nis_raw);
     if ($nis_digits !== '') {
         // Check in folha_p_2023 first
     $sf2 = $pdo->prepare("SELECT 1 FROM beneficiario.folha_p_2023 WHERE regexp_replace(CAST(nis AS text), '\\D', '', 'g') = :nis LIMIT 1");

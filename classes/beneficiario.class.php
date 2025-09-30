@@ -420,6 +420,16 @@ public function incluirBeneficiario()
 {
     $pdo = Database::conexao();
     try {
+        // Verificar saldo antes de inserir na cesta
+        if (!empty($this->cod_unidade)) {
+            $ver = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
+            $ver->bindParam(':cod_unidade', $this->cod_unidade, PDO::PARAM_INT);
+            $ver->execute();
+            $res = $ver->fetch(PDO::FETCH_ASSOC);
+            if (!$res || (int)$res['saldo'] <= 0) {
+                throw new Exception('Não há vagas disponíveis para esta unidade.');
+            }
+        }
         $consulta = $pdo->prepare("
             UPDATE beneficiario.beneficiario 
             SET situacao = :situacao, cod_usuario = :cod_usuario 
@@ -440,7 +450,7 @@ public function incluirBeneficiario()
         $consulta_saldo->execute();
         return $consulta->execute(); // retorna true/false
     } catch (PDOException $e) {
-        return false;
+        throw new Exception('Erro ao atualizar situação: ' . $e->getMessage());
     }
 }
 

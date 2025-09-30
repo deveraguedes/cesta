@@ -36,9 +36,9 @@
          <div class="form-group"> 
              <label for="nis">NIS</label> 
              <input type="text" id="nis" class="form-control" maxlength="15" name="nis" 
-                    onblur="return verificarCPFNIS(this.value)" 
                     onkeypress="return somenteNumeros(event)" 
                     title="Coloque o NIS sem pontos ou traços"> 
+             <small class="form-text text-muted">Informe NIS ou CPF. Pelo menos um é obrigatório.</small>
          </div> 
  
          <div class="form-group"> 
@@ -46,6 +46,7 @@
              <input type="text" id="cpf" class="form-control" name="cpf" maxlength="11" 
                     onkeypress="return somenteNumeros(event)" 
                     title="Coloque o CPF sem pontos ou traços"> 
+             <small class="form-text text-muted">Informe NIS ou CPF. Pelo menos um é obrigatório.</small>
          </div> 
  
          <div class="form-group"> 

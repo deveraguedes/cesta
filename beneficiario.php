@@ -575,12 +575,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
   </script>
   <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Expose vagasDisponiveis to client scripts for gating
+    window.vagasDisponiveis = <?= (int)$vagasDisponiveis ?>;
     document.querySelectorAll(".btn-cesta").forEach(btn => {
         btn.addEventListener("click", function() {
             const cod_beneficiario = this.dataset.id;
             const situacao = this.dataset.situacao;
             const cod_unidade = this.dataset.unidade;
             const cod_usuario = this.dataset.usuario;
+
+            // Block insertion when no vagas, provide subtle inline feedback by preventing action
+            if (parseInt(situacao, 10) === 1 && window.vagasDisponiveis <= 0) {
+                this.classList.add('disabled');
+                this.setAttribute('title', 'Sem vagas disponíveis nesta unidade');
+                return; // no alerts, no top notifications
+            }
 
             fetch("usuarios/processamento/alterar_situacao.php", {
                 method: "POST",
@@ -590,13 +599,17 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    location.reload(); // recarrega a lista sem sair da página
+                    location.reload(); // recarrega a lista sem sair da página sem top notifications
                 } else {
-                    alert("Erro: " + data.message);
+                    // Keep UI quiet; optionally mark the button subtly
+                    console.error("Erro:", data.message);
+                    const el = document.createElement('small');
+                    el.className = 'text-danger d-block';
+                    el.textContent = data.message || 'Operação não permitida.';
+                    this.parentNode.appendChild(el);
                 }
             })
-            .catch(err => alert("Falha na requisição: " + err));
+            .catch(err => console.error("Falha na requisição:", err));
         });
     });
 });

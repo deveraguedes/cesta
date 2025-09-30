@@ -5,8 +5,9 @@
   $(function(){
     const $cpf = $('#cpf');
     const $nis = $('#nis');
-    const $form = $('#formBeneficiario');
-    const $submitBtn = $form.find('button[type="submit"]');
+    // Target the nearest form containing the CPF field to work for both Inserir/Alterar
+    const $form = $cpf.closest('form');
+    const $submitBtn = $form.find('button[type="submit"], input[type="submit"], input[type="button"][onclick*="verifica"]');
     const $alertEl = $('#alertBeneficiario');
 
     // Init Inputmask for live CPF formatting while typing
@@ -55,8 +56,8 @@
     }
 
     // Inline helpers
-    let lastInline = { field: null, value: null, message: null };
-    function showInlineError(fieldId, message, value = null) {
+    let lastInline = { field: null, value: null, message: null, type: null };
+    function showInlineError(fieldId, message, value = null, type = 'validation') {
       const el = document.getElementById(fieldId);
       if (!el) return;
       el.classList.add('is-invalid');
@@ -67,16 +68,21 @@
         el.parentNode.appendChild(feedback);
       }
       feedback.textContent = message;
-      lastInline.field = fieldId; lastInline.value = value != null ? String(value).trim() : (el.value || '').trim(); lastInline.message = message;
+      lastInline.field = fieldId; lastInline.value = value != null ? String(value).trim() : (el.value || '').trim(); lastInline.message = message; lastInline.type = type;
     }
     function clearInlineError(fieldId, force = false) {
       const el = document.getElementById(fieldId);
       if (!el) return;
       const current = (el.value || '').trim();
-      if (!force && lastInline.field === fieldId && lastInline.value === current) return;
+      // Do not clear validation-origin errors unless forced or value changed
+      if (!force) {
+        if (lastInline.field === fieldId) {
+          if (lastInline.type === 'validation' && lastInline.value === current) return;
+        }
+      }
       el.classList.remove('is-invalid');
       const feedback = el.parentNode.querySelector('.invalid-feedback'); if (feedback) feedback.remove();
-      if (lastInline.field === fieldId) lastInline = { field: null, value: null, message: null };
+      if (lastInline.field === fieldId) lastInline = { field: null, value: null, message: null, type: null };
     }
 
     // Modal alert helpers
@@ -142,13 +148,20 @@
               const cod = same.unidade_cod || same.cod_unidade || null;
               msg = `${(field === 'cpf' ? 'CPF' : 'NIS')} já existe na unidade ${u || cod}`;
             }
-            showInlineError(field, msg, payloadVal);
+            showInlineError(field, msg, payloadVal, 'duplicate');
             showModalAlert(msg, 'danger', field, payloadVal);
             disableSubmit(true);
             return false;
           }
         }
-        clearInlineError(field);
+        // Only clear inline error if the last inline message originated from 'duplicate'
+        if (lastInline.field === field) {
+          if (lastInline.type === 'duplicate') {
+            clearInlineError(field);
+          }
+        } else {
+          clearInlineError(field);
+        }
         if (!lastAlert.field || lastAlert.field === field) clearModalAlert();
         disableSubmit(false);
         return true;
@@ -158,18 +171,33 @@
     function verifica() {
       const nis = ($nis.val() || '').replace(/\D/g, '').trim();
       const cpf = getCpfDigits();
-      // CPF required and must be valid – use stable inline errors, no alerts
-      if (!cpf) {
-        showInlineError('cpf', 'CPF deve ser informado!');
+      // Require at least one identifier (NIS or CPF). If provided, each must be valid.
+      if (!cpf && !nis) {
+        showInlineError('cpf', 'Informe NIS ou CPF. Pelo menos um é obrigatório.', '', 'validation');
+        // also hint on NIS field without marking invalid twice
+        $nis.length && $nis.focus();
+        disableSubmit(false);
+        return false;
+      }
+      if (cpf && !verificarCPF(cpf)) {
+        showInlineError('cpf', 'CPF inválido!', cpf, 'validation');
         $cpf.focus();
         disableSubmit(false);
         return false;
       }
-      if (!verificarCPF(cpf)) {
-        showInlineError('cpf', 'CPF inválido!');
-        $cpf.focus();
-        disableSubmit(false);
-        return false;
+      if (nis) {
+        if (verificarCPF(nis) && !verificarPIS(nis)) {
+          showInlineError('nis','Este número parece ser um CPF, não um NIS. Verifique os campos.', nis, 'validation');
+          disableSubmit(false);
+          $nis.focus();
+          return false;
+        }
+        if (!verificarPIS(nis)) {
+          showInlineError('nis','NIS inválido ou com formato desconhecido. Confirme o número.', nis, 'validation');
+          disableSubmit(false);
+          $nis.focus();
+          return false;
+        }
       }
       const campos = ['nome','cod_bairro','endereco','cod_tipo'];
       const labels = ['Nome','Bairro','Endereço','Tipo de Beneficiário'];
@@ -189,7 +217,7 @@
       $submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
 
       // Ensure digits-only CPF value is submitted
-      try { $cpf.val(getCpfDigits()); } catch(e){}
+      try { if ($cpf.length) $cpf.val(getCpfDigits()); } catch(e){}
 
       // Enviar formulário diretamente (bypass our preventDefault handler safely)
       try {
@@ -221,7 +249,7 @@
       const val = getCpfDigits();
       if (val) {
         if (!verificarCPF(val)) {
-          showInlineError('cpf', 'CPF inválido!', val);
+          showInlineError('cpf', 'CPF inválido!', val, 'validation');
         } else {
           clearInlineError('cpf', true);
         }
@@ -235,7 +263,7 @@
     $cpf.add($nis).on('keypress', function(e){ const charCode = e.which || e.keyCode; if (charCode !== 8 && charCode !== 9) { if (charCode < 48 || charCode > 57) e.preventDefault(); } });
 
     $cpf.on('input paste change', function(){
-      clearInlineError('cpf');
+      // Do not clear inline error immediately; keep it visible until value validates
       if (lastAlert.field === 'cpf'){
         const current = getCpfDigits();
         if (current !== lastAlert.value) clearModalAlert();
@@ -245,6 +273,8 @@
     });
     $nis.on('input paste change', function(){ clearInlineError('nis'); if (lastAlert.field === 'nis'){ const current = ($nis.val()||'').trim(); if (current !== lastAlert.value) clearModalAlert(); } debouncedCheckNis(); });
 
-    $form.on('submit', function(e){ e.preventDefault(); verifica(); });
+    if ($form && $form.length) {
+      $form.on('submit', function(e){ e.preventDefault(); verifica(); });
+    }
   });
 })(jQuery);
