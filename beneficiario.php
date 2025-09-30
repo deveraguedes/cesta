@@ -310,6 +310,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           </div>
         </div>
 
+        <!-- Mensagens de página (sucesso/erro) -->
+        <div id="pageAlert" class="alert d-none" role="alert" style="display:none;"></div>
+
+        <!-- Mensagens de página (sucesso/erro) -->
+        <div id="pageAlert" class="alert d-none" role="alert" style="display:none;"></div>
+
+        <div class="table-responsive">
         <table id="tabela" class="table table-striped table-bordered">
           <thead>
             <tr>
@@ -374,6 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             <?php endforeach; ?>
           </tbody>
         </table>
+        </div>
 
         <!-- Paginação estilo avançado -->
         <?php
@@ -508,7 +516,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             $('#modalAlterarBeneficiario .modal-content').html(response);
           },
           error: function() {
-            alert('Erro ao carregar o formulário de alteração.');
+            showPageAlert('danger', 'Erro ao carregar o formulário de alteração.');
           }
         });
       });
@@ -529,14 +537,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             dataType: 'json',
             success: function(response) {
               if (response.success) {
-                alert(response.message);
-                window.location.reload();
+                showPageAlert('success', response.message);
+                setTimeout(function(){ window.location.reload(); }, 1200);
               } else {
-                alert('Erro: ' + response.message);
+                showPageAlert('danger', 'Erro: ' + response.message);
               }
             },
             error: function() {
-              alert('Erro ao processar a solicitação.');
+              showPageAlert('danger', 'Erro ao processar a solicitação.');
             }
           });
         }
@@ -559,19 +567,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             dataType: 'json',
             success: function(response) {
               if (response.success) {
-                alert(response.message);
-                window.location.reload();
+                showPageAlert('success', response.message);
+                setTimeout(function(){ window.location.reload(); }, 1200);
               } else {
-                alert('Erro: ' + response.message);
+                showPageAlert('danger', 'Erro: ' + response.message);
               }
             },
             error: function() {
-              alert('Erro ao processar a solicitação.');
+              showPageAlert('danger', 'Erro ao processar a solicitação.');
             }
           });
         }
       });
     });
+  </script>
+  <script>
+  // Helper para mensagens de página (sucesso/erro)
+  function showPageAlert(type, message){
+    var el = document.getElementById('pageAlert');
+    if(!el) return;
+    var cls = 'alert alert-'+type+' alert-dismissible fade show';
+    el.className = cls;
+    el.style.display = '';
+    el.innerHTML = '<span>'+ (message || '') +'</span>'+
+      '<button type="button" class="close" data-dismiss="alert" aria-label="Fechar">'+
+      '<span aria-hidden="true">&times;</span></button>';
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function clearPageAlert(){
+    var el = document.getElementById('pageAlert');
+    if(el){ el.className = 'alert d-none'; el.style.display = 'none'; el.innerHTML = ''; }
+  }
   </script>
   <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -599,20 +625,37 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    location.reload(); // recarrega a lista sem sair da página sem top notifications
+                    showPageAlert('success', data.message || 'Operação realizada com sucesso.');
+                    setTimeout(function(){ location.reload(); }, 1200);
                 } else {
-                    // Keep UI quiet; optionally mark the button subtly
-                    console.error("Erro:", data.message);
-                    const el = document.createElement('small');
-                    el.className = 'text-danger d-block';
-                    el.textContent = data.message || 'Operação não permitida.';
-                    this.parentNode.appendChild(el);
+                    console.error('Erro:', data.message);
+                    showPageAlert('danger', (data.message || 'Operação não permitida.'));
                 }
             })
             .catch(err => console.error("Falha na requisição:", err));
         });
     });
 });
+</script>
+
+<!-- Fallback configurável de WebSocket de recarregamento (evita erros quando endpoint não responde) -->
+<script>
+(function(){
+  var defaultEndpoint = (location.protocol === 'https:'
+    ? 'wss://' + location.host + '/cesta/ws/ws'
+    : 'ws://' + location.host + '/cesta/ws/ws');
+  var endpoint = window.RELOAD_WS_ENDPOINT || defaultEndpoint;
+  try {
+    if ('WebSocket' in window){
+      var ws = new WebSocket(endpoint);
+      ws.onopen = function(){ console.log('Reload WebSocket conectado:', endpoint); };
+      ws.onmessage = function(ev){ if (ev.data === 'reload') { location.reload(); } };
+      ws.onerror = function(err){ console.warn('Reload WebSocket erro:', err); };
+      ws.onclose = function(){ console.warn('Reload WebSocket fechado'); };
+      window.ReloadSocket = ws;
+    }
+  } catch(e){ console.warn('Falha ao iniciar Reload WebSocket:', e); }
+})();
 </script>
 
 </body>

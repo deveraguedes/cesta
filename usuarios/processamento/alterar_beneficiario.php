@@ -21,24 +21,17 @@ $cod_unidade = $row_usuario["cod_unidade"];
 $c = new Categoria();
 $categorias = $c->listarCategorias();
 ?>
-<style>
-   .close {
-      margin-left: 22em;
-   }
-</style>
-
-<link rel="stylesheet" href="../css/bootstrap-combobox.css">
+<link rel="stylesheet" href="../../css/bootstrap-combobox.css">
 
 <!-- Modal content-->
 <div class="modal-content">
-   <button type="button" class="close" data-dismiss="modal">&times;</button>
-
    <div class="modal-header">
       <h4 class="modal-title">Alterar Beneficiário</h4>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
    </div>
 
    <div class="modal-body">
-      <form method="POST" name="form" action="processamento/processar_beneficiario.php" data-toggle="validator" role="form">
+      <form method="POST" name="form" action="usuarios/processamento/processar_beneficiario.php" data-toggle="validator" role="form">
          <input type="hidden" id="cod_beneficiario" name="cod_beneficiario" value="<?php echo $row_beneficiario["cod_beneficiario"]; ?>">
          <input type="hidden" id="cod_usuario" name="cod_usuario" value="<?php echo $cod_usuario; ?>">
          <input type="hidden" id="cod_unidade" name="cod_unidade" value="<?php echo $cod_unidade; ?>">
@@ -133,7 +126,7 @@ $categorias = $c->listarCategorias();
             </select>
          </div>
 
-         <input type="button" value="Salvar Dados" onclick="verifica();" class="btn btn-success">
+         <button type="submit" class="btn btn-success">Salvar Dados</button>
          <input type="hidden" name="MM_action" value="2">
       </form>
    </div>
