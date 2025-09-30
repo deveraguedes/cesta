@@ -330,17 +330,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 <?php endif; ?>
                 <td><?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?></td>
                 <td>
-                  <a href="forms/alterar_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-primary mb-1">Alterar</a>
-                  <?php if ($row["situacao"] == 1): ?>
-                    <a href="processamento/remover_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-danger mb-1">Remover da Cesta</a>
-                  <?php else: ?>
-                    <?php if ($vagasDisponiveis > 0): ?>
-                      <a href="processamento/inserir_beneficiario.php?cod_beneficiario=<?= $row['cod_beneficiario']; ?>&cod_usuario=<?= $cod_usuario; ?>" class="btn btn-sm btn-success mb-1">Inserir na Cesta</a>
-                    <?php else: ?>
-                      <button class="btn btn-sm btn-secondary mb-1" disabled>Sem vagas disponíveis</button>
-                    <?php endif; ?>
-                  <?php endif; ?>
-                </td>
+  <!-- Botão Alterar -->
+  <a href="#"
+     class="btn btn-sm btn-primary mb-1"
+     data-toggle="modal"
+     data-target="#modalAlterarBeneficiario"
+     data-id="<?= $row['cod_beneficiario']; ?>"
+     data-usuario="<?= $cod_usuario; ?>">
+     Alterar
+  </a>
+
+    <!-- Botão Inserir/Remover da cesta  -->
+<button type="button"
+        class="btn btn-sm <?= $row['situacao'] == 1 ? 'btn-danger btn-cesta' : 'btn-success btn-cesta'; ?> mb-1"
+        data-id="<?= $row['cod_beneficiario']; ?>"
+        data-situacao="<?= $row['situacao'] == 1 ? 0 : 1; ?>"
+        data-unidade="<?= $cod_unidade; ?>"
+        data-usuario="<?= $cod_usuario; ?>">
+    <?= $row['situacao'] == 1 ? 'Remover da Cesta' : 'Inserir na Cesta'; ?>
+</button>
+
+</td>
+</td>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -424,6 +435,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       </div>
     </div>
   </div>
+  
+  <!-- Modal Alterar Beneficiário -->
+  <div class="modal fade" id="modalAlterarBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalAlterarBeneficiarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <!-- Conteúdo será carregado via AJAX -->
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -437,23 +457,176 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 
   <script>
     $(document).ready(function() {
-    $('#tabela').DataTable({
-      paging: false, // desabilita paginação do DataTables
-      searching: true,
-      ordering: true,
-      language: {
-  // Use local copy to avoid cross-origin XHR and CDN availability issues
-  url: "vendor/datatables/plug-ins/1.13.6/i18n/pt-BR.json"
-      }
-    });
+      $('#tabela').DataTable({
+        paging: false, // desabilita paginação do DataTables
+        searching: true,
+        ordering: true,
+        language: {
+          // Use local copy to avoid cross-origin XHR and CDN availability issues
+          url: "vendor/datatables/plug-ins/1.13.6/i18n/pt-BR.json"
+        }
+      });
 
-    $('#modalCategoria').on('show.bs.modal', function(event) {
-      var button = $(event.relatedTarget);
-      var codBeneficiario = button.data('id');
-      $('#cod_beneficiario').val(codBeneficiario);
-    });
+      $('#modalCategoria').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var codBeneficiario = button.data('id');
+        $('#cod_beneficiario').val(codBeneficiario);
+      });
+      
+      $('#modalAlterarBeneficiario').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var codBeneficiario = button.data('id');
+        var codUsuario = button.data('usuario');
+        
+        // Carregar o conteúdo do formulário via AJAX
+        $.ajax({
+          url: 'usuarios/processamento/alterar_beneficiario.php',
+          type: 'GET',
+          data: {
+            cod_beneficiario: codBeneficiario,
+            cod_usuario: codUsuario
+          },
+          success: function(response) {
+            $('#modalAlterarBeneficiario .modal-content').html(response);
+          },
+          error: function() {
+            alert('Erro ao carregar o formulário de alteração.');
+          }
+        });
+      });
+      
+      // Botão Remover da Cesta
+      $(document).on('click', '.btn-remover', function() {
+        var codBeneficiario = $(this).data('id');
+        var codUnidade = $(this).data('unidade');
+        
+        if (confirm('Tem certeza que deseja remover este beneficiário da cesta?')) {
+          $.ajax({
+            url: 'usuarios/processamento/remover_beneficiario.php',
+            type: 'POST',
+            data: {
+              cod_beneficiario: codBeneficiario,
+              cod_unidade: codUnidade
+            },
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                alert(response.message);
+                window.location.reload();
+              } else {
+                alert('Erro: ' + response.message);
+              }
+            },
+            error: function() {
+              alert('Erro ao processar a solicitação.');
+            }
+          });
+        }
+      });
+      
+      // Botão Inserir na Cesta
+      $(document).on('click', '.btn-inserir', function() {
+        var codBeneficiario = $(this).data('id');
+        var codUnidade = $(this).data('unidade');
+        
+        if (confirm('Tem certeza que deseja inserir este beneficiário na cesta?')) {
+          $.ajax({
+            url: 'usuarios/processamento/alterar_situacao.php',
+            type: 'POST',
+            data: {
+              cod_beneficiario: codBeneficiario,
+              cod_unidade: codUnidade,
+              situacao: 1
+            },
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                alert(response.message);
+                window.location.reload();
+              } else {
+                alert('Erro: ' + response.message);
+              }
+            },
+            error: function() {
+              alert('Erro ao processar a solicitação.');
+            }
+          });
+        }
+      });
     });
   </script>
+  <script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".btn-cesta").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const cod_beneficiario = this.dataset.id;
+            const situacao = this.dataset.situacao;
+            const cod_unidade = this.dataset.unidade;
+            const cod_usuario = this.dataset.usuario;
+
+            fetch("usuarios/processamento/alterar_situacao.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `cod_beneficiario=${cod_beneficiario}&situacao=${situacao}&cod_unidade=${cod_unidade}&cod_usuario=${cod_usuario}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload(); // recarrega a lista sem sair da página
+                } else {
+                    alert("Erro: " + data.message);
+                }
+            })
+            .catch(err => alert("Falha na requisição: " + err));
+        });
+    });
+});
+</script>
+
 </body>
+<div class="modal fade" id="modalCesta" tabindex="-1" role="dialog" aria-labelledby="modalCestaLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form method="POST" action="usuarios/processamento/alterar_situacao.php">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCestaLabel">Confirmação</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <p id="textoConfirmacao">Tem certeza?</p>
+          <input type="hidden" name="cod_beneficiario" id="modal_cod_beneficiario">
+          <input type="hidden" name="situacao" id="modal_situacao">
+          <input type="hidden" name="cod_usuario" value="<?= $cod_usuario; ?>">
+          <input type="hidden" name="cod_unidade" value="<?= $cod_unidade; ?>">
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Confirmar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+$('#modalCesta').on('show.bs.modal', function (event) {
+  var button = $(event.relatedTarget); // Botão que abriu o modal
+  var id = button.data('id');
+  var situacao = button.data('situacao');
+  var acao = button.data('acao');
+
+  // Atualiza os inputs hidden do form
+  var modal = $(this);
+  modal.find('#modal_cod_beneficiario').val(id);
+  modal.find('#modal_situacao').val(situacao);
+
+  // Texto da confirmação
+  modal.find('#textoConfirmacao').text("Deseja realmente " + acao + "?");
+});
+</script>
 
 </html>

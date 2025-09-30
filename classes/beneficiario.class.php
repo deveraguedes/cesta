@@ -187,14 +187,22 @@ class Beneficiario
     {
         return $this->cod_tipo;
     }
-    public function setCategoria($categoria) {
+   public function setCategoria($categoria) {
     if (is_array($categoria)) {
+        // quando vier array (ex: do fetchAll)
         $this->cod_categoria = $categoria['cod_categoria'] ?? null;
     } elseif ($categoria instanceof Categoria) {
-        $this->cod_categoria = $categoria->getId(); // supondo que tenha getId()
+        // quando vier um objeto Categoria, você já espera receber o ID
+        // por exemplo: $b->setCategoria(new Categoria())->buscarPorId(3)
+        $dados = $categoria->buscarPorId($this->cod_categoria ?? 0);
+        $this->cod_categoria = $dados['cod_categoria'] ?? null;
+    } elseif (is_numeric($categoria)) {
+        // aceita ID diretamente
+        $this->cod_categoria = (int)$categoria;
     } else {
         $this->cod_categoria = null;
     }
+
 }
 
     public function getCategoria()
@@ -293,9 +301,9 @@ public function inserirBeneficiario() {
             throw new Exception("Falha ao inserir beneficiário. Erro PDO: " . $errorInfo[2]);
         }
 
-        // Atualizar saldo da unidade quando situacao = 1 (incluído na cesta)
-        if (!empty($this->cod_unidade) && $this->situacao == 1) {
-            $sqlSaldo = "UPDATE beneficiario.saldo_unidade SET saldo = saldo - 1 WHERE cod_unidade = :cod_unidade";
+        // . Atualizar saldo da unidade (se informado)
+        if (!empty($this->cod_unidade)) {
+            $sqlSaldo = "UPDATE saldo SET saldo = saldo + 1 WHERE cod_unidade = :cod_unidade";
             $stmtSaldo = $this->db->prepare($sqlSaldo);
             $stmtSaldo->bindValue(':cod_unidade', $this->cod_unidade);
 
@@ -378,53 +386,64 @@ public function inserirBeneficiario() {
 
 
 
+// Atualiza a situação do beneficiário para 0 (fora da cesta)
+public function excluirBeneficiario()
+{
+    $pdo = Database::conexao();
+    try {
+        $consulta = $pdo->prepare("
+            UPDATE beneficiario.beneficiario 
+            SET situacao = :situacao, cod_usuario = :cod_usuario 
+            WHERE cod_beneficiario = :cod_beneficiario;
+        ");
+        $consulta->bindParam(':cod_beneficiario', $this->cod_beneficiario);
+        $consulta->bindParam(':cod_usuario', $this->cod_usuario);
+        $this->situacao = 0;
+        $consulta->bindParam(':situacao', $this->situacao);
 
-    //atualiza a situacao do beneficiario na cesta para 0, ou seja, ele est excluido da cesta
-    public function excluirBeneficiario()
-    {
-        $pdo = Database::conexao();
-        try {
+        $consulta_saldo = $pdo->prepare("
+            UPDATE beneficiario.saldo_unidade 
+            SET saldo = saldo + 1 
+            WHERE cod_unidade = :cod_unidade;
+        ");
+        $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
 
-            $consulta = $pdo->prepare("update beneficiario.beneficiario set situacao = :situacao, cod_usuario = :cod_usuario WHERE cod_beneficiario = :cod_beneficiario;");
-            $consulta->bindParam(':cod_beneficiario', $this->cod_beneficiario);
-            $consulta->bindParam(':cod_usuario', $this->cod_usuario);
-            $consulta->bindParam(':situacao', $this->situacao);
-
-            $consulta_saldo = $pdo->prepare("update beneficiario.saldo_unidade set saldo = saldo + 1 WHERE cod_unidade = :cod_unidade;");
-            $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
-
-            $consulta_saldo->execute();
-
-            $consulta->execute();
-            header('Location: ../beneficiario.php');
-        } catch (PDOException $e) {
-            echo "Ocorreu um erro: $e";
-        }
+        $consulta_saldo->execute();
+        return $consulta->execute(); // retorna true/false
+    } catch (PDOException $e) {
+        return false;
     }
+}
 
-    //atualiza a situacao do beneficiario na cesta para 1, ou seja, ele est incluido
-    public function incluirBeneficiario()
-    {
-        $pdo = Database::conexao();
-        try {
+// Atualiza a situação do beneficiário para 1 (dentro da cesta)
+public function incluirBeneficiario()
+{
+    $pdo = Database::conexao();
+    try {
+        $consulta = $pdo->prepare("
+            UPDATE beneficiario.beneficiario 
+            SET situacao = :situacao, cod_usuario = :cod_usuario 
+            WHERE cod_beneficiario = :cod_beneficiario;
+        ");
+        $consulta->bindParam(':cod_beneficiario', $this->cod_beneficiario);
+        $consulta->bindParam(':cod_usuario', $this->cod_usuario);
+        $this->situacao = 1;
+        $consulta->bindParam(':situacao', $this->situacao);
 
-            $consulta = $pdo->prepare("update beneficiario.beneficiario set situacao = :situacao, cod_usuario= :cod_usuario WHERE cod_beneficiario = :cod_beneficiario;");
-            $consulta->bindParam(':cod_beneficiario', $this->cod_beneficiario);
-            $consulta->bindParam(':cod_usuario', $this->cod_usuario);
-            $consulta->bindParam(':situacao', $this->situacao);
+        $consulta_saldo = $pdo->prepare("
+            UPDATE beneficiario.saldo_unidade 
+            SET saldo = saldo - 1 
+            WHERE cod_unidade = :cod_unidade;
+        ");
+        $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
 
-            $consulta_saldo = $pdo->prepare("update beneficiario.saldo_unidade set saldo = saldo - 1 WHERE cod_unidade = :cod_unidade;");
-            $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
-
-            $consulta_saldo->execute();
-
-
-            $consulta->execute();
-            header('Location: ../beneficiario.php');
-        } catch (PDOException $e) {
-            echo "Ocorreu um erro: $e";
-        }
+        $consulta_saldo->execute();
+        return $consulta->execute(); // retorna true/false
+    } catch (PDOException $e) {
+        return false;
     }
+}
+
 
     public function gerarRelatorio2()
     {

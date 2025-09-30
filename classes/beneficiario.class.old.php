@@ -277,27 +277,29 @@ class Beneficiario
 
 
     //atualiza a situacao do beneficiario na cesta para 0, ou seja, ele est excluido da cesta
-    public function excluirBeneficiario()
-    {
-        $pdo = Database::conexao();
-        try {
+   public function excluirBeneficiario()
+{
+    $pdo = Database::conexao();
+    try {
+        $consulta = $pdo->prepare("UPDATE beneficiario.beneficiario 
+            SET situacao = :situacao, cod_usuario = :cod_usuario 
+            WHERE cod_beneficiario = :cod_beneficiario;");
+        $consulta->bindParam(':cod_beneficiario', $this->cod_beneficiario);
+        $consulta->bindParam(':cod_usuario', $this->cod_usuario);
+        $consulta->bindParam(':situacao', $this->situacao);
 
-            $consulta = $pdo->prepare("update beneficiario.beneficiario set situacao = :situacao, cod_usuario = :cod_usuario WHERE cod_beneficiario = :cod_beneficiario;");
-            $consulta->bindParam(':cod_beneficiario', $this->cod_beneficiario);
-            $consulta->bindParam(':cod_usuario', $this->cod_usuario);
-            $consulta->bindParam(':situacao', $this->situacao);
+        $consulta_saldo = $pdo->prepare("UPDATE beneficiario.saldo_unidade 
+            SET saldo = saldo + 1 WHERE cod_unidade = :cod_unidade;");
+        $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
 
-            $consulta_saldo = $pdo->prepare("update beneficiario.saldo_unidade set saldo = saldo + 1 WHERE cod_unidade = :cod_unidade;");
-            $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
+        $consulta_saldo->execute();
+        $consulta->execute();
 
-            $consulta_saldo->execute();
-
-            $consulta->execute();
-            header('Location: ../beneficiario.php');
-        } catch (PDOException $e) {
-            echo "Ocorreu um erro: $e";
-        }
+        return true;  
+    } catch (PDOException $e) {
+        return false; 
     }
+}
 
     //atualiza a situacao do beneficiario na cesta para 1, ou seja, ele est incluido
     public function incluirBeneficiario()

@@ -2,9 +2,9 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-require_once '../classes/beneficiario.class.php';
-require_once '../classes/categoria.class.php';
-
+include_once(__DIR__ . '/../../classes/beneficiario.class.php');
+include_once(__DIR__ . '/../../classes/usuarios.class.php');
+include_once(__DIR__ . '/../../classes/categoria.class.php');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Método não permitido']);
     exit;
@@ -167,14 +167,10 @@ try {
     $beneficiario->setCod_unidade($submitted_unidade); // Definir a unidade do usuário
     $beneficiario->setSituacao(1); // Ativo por padrão
 
-    // Se for admin e enviou categoria
-    if (!empty($_POST['cod_categoria']) && ($_SESSION['int_level'] ?? 0) == 1) {
-        $categoria = new Categoria();
-        $categoriaObj = $categoria->buscarPorId($_POST['cod_categoria']);
-        if ($categoriaObj) {
-            $beneficiario->setCategoria($categoriaObj);
-        }
-    }
+    // Controle de nível: apenas nível 1 define categoria
+    if (!empty($_POST['cod_categoria']) && ($_SESSION['int_nivel'] ?? 0) == 1) {
+    $beneficiario->setCategoria($_POST['cod_categoria']);
+}
 
     // Inserir beneficiário
     if ($beneficiario->inserirBeneficiario()) {
