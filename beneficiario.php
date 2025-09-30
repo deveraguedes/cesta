@@ -657,6 +657,83 @@ document.addEventListener("DOMContentLoaded", function() {
   } catch(e){ console.warn('Falha ao iniciar Reload WebSocket:', e); }
 })();
 </script>
+<script>
+$('#modalCesta').on('show.bs.modal', function (event) {
+  var button = $(event.relatedTarget); // Botão que abriu o modal
+  var id = button.data('id');
+  var situacao = button.data('situacao');
+  var acao = button.data('acao');
+
+  // Atualiza os inputs hidden do form
+  var modal = $(this);
+  modal.find('#modal_cod_beneficiario').val(id);
+  modal.find('#modal_situacao').val(situacao);
+
+  // Texto da confirmação
+  modal.find('#textoConfirmacao').text("Deseja realmente " + acao + "?");
+});
+</script>
+<script>
+$(function() {
+  function showMessage(text, type) {
+    var box = $('#mensagem-acao');
+    if (!box.length) {
+      $('body').append('<div id="mensagem-acao" class="alert d-none" style="position:fixed;top:20px;right:20px;z-index:9999;"></div>');
+      box = $('#mensagem-acao');
+    }
+    box.removeClass('d-none alert-success alert-danger').addClass(type === 'success' ? 'alert-success' : 'alert-danger');
+    box.text(text).show();
+    clearTimeout(window._msgTimeout);
+    window._msgTimeout = setTimeout(function() {
+      box.fadeOut(300, function(){ box.addClass('d-none').show(); });
+    }, 4000);
+  }
+
+  $(document).on('click', '.btn-cesta', function(e) {
+    e.preventDefault();
+    var btn = $(this);
+    var cod = btn.data('id');
+    var situacao = parseInt(btn.data('situacao'), 10); // 1 = inserir, 0 = remover
+    var unidade = btn.data('unidade');
+    var usuario = btn.data('usuario');
+
+    var texto = (situacao === 1) ? 'Deseja inserir este beneficiário na cesta?' : 'Deseja remover este beneficiário da cesta?';
+    if (!confirm(texto)) return;
+
+    $.ajax({
+      url: 'usuarios/processamento/alterar_situacao.php',
+      method: 'POST',
+      dataType: 'json',
+      data: {
+        cod_beneficiario: cod,
+        situacao: situacao,
+        cod_unidade: unidade,
+        cod_usuario: usuario
+      }
+    }).done(function(resp) {
+      if (resp.success) {
+        showMessage(resp.message, 'success');
+
+        // Atualiza botão
+        if (situacao === 1) {
+          btn.removeClass('btn-success').addClass('btn-danger').text('Remover da Cesta').data('situacao', 0);
+        } else {
+          btn.removeClass('btn-danger').addClass('btn-success').text('Inserir na Cesta').data('situacao', 1);
+        }
+
+        // Atualiza célula situação
+        btn.closest('tr').find('.situacao-cell').text(situacao === 1 ? 'Incluído na Cesta' : 'Fora da Cesta');
+
+      } else {
+        showMessage(resp.message || 'Erro ao processar.', 'danger');
+      }
+    }).fail(function(xhr, status) {
+      showMessage('Erro na requisição: ' + status, 'danger');
+    });
+  });
+});
+</script>
+
 
 </body>
 <div class="modal fade" id="modalCesta" tabindex="-1" role="dialog" aria-labelledby="modalCestaLabel" aria-hidden="true">
@@ -686,21 +763,6 @@ document.addEventListener("DOMContentLoaded", function() {
     </form>
   </div>
 </div>
-<script>
-$('#modalCesta').on('show.bs.modal', function (event) {
-  var button = $(event.relatedTarget); // Botão que abriu o modal
-  var id = button.data('id');
-  var situacao = button.data('situacao');
-  var acao = button.data('acao');
 
-  // Atualiza os inputs hidden do form
-  var modal = $(this);
-  modal.find('#modal_cod_beneficiario').val(id);
-  modal.find('#modal_situacao').val(situacao);
-
-  // Texto da confirmação
-  modal.find('#textoConfirmacao').text("Deseja realmente " + acao + "?");
-});
-</script>
 
 </html>
