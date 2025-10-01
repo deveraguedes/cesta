@@ -3,6 +3,9 @@ if (session_status() == PHP_SESSION_NONE) {
   session_start();
 }
 include_once "../classes/beneficiario.class.php";
+include_once "../classes/categoria.class.php";
+
+
 
 if (!isset($_SESSION['user_id'])) {
   header('Location: ../usuarios/login.php'); // Redireciona para a página de login se não estiver logado
@@ -144,7 +147,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
         <div class="container" style="width: 200px;">
           <ul class="nav flex-column">
             <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+              <li class="nav-item"><a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
             <?php endif; ?>
             <li class="nav-item">
               <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
@@ -153,7 +156,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
             <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
-              <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
+              <li class="nav-item"><a href="/cesta/categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($int_nivel == 1): ?>
               <li class="nav-item">
