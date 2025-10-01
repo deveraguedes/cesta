@@ -27,17 +27,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvfile'])) {
             // pula cabeçalho
             fgetcsv($handle, 0, ";");
 
-            // prepara INSERT com ON CONFLICT (cpf, periodo) DO NOTHING
+            $periodo = date("m/Y");
+
+            // Pré-carrega CPFs já existentes no período para reduzir verificações por linha
+            $cpfExistentes = [];
+            $stmtCpfs = $pdo->prepare("SELECT cpf FROM beneficiario.folha WHERE periodo = :periodo");
+            $stmtCpfs->execute([':periodo' => $periodo]);
+            while ($row = $stmtCpfs->fetch(PDO::FETCH_ASSOC)) {
+                // normaliza para dígitos
+                $cpfExistentes[preg_replace('/\D/', '', (string)$row['cpf'])] = true;
+            }
+
+            // Track CPFs já vistos neste arquivo para evitar duplicidades dentro do mesmo upload
+            $cpfArquivo = [];
+
+            // prepara INSERT simples (sem NOT EXISTS) — checagem acontece em PHP via conjuntos
             $sqlInsert = "INSERT INTO beneficiario.folha 
                             (cod_familiar, cpf, nis, nome, endereco, bairro, cep, tel1, tel2, periodo)
                           VALUES 
-                            (:cod_familiar, :cpf, :nis, :nome, :endereco, :bairro, :cep, :tel1, :tel2, :periodo)
-                          ON CONFLICT (cpf, periodo) DO NOTHING";
+                            (:cod_familiar, :cpf, :nis, :nome, :endereco, :bairro, :cep, :tel1, :tel2, :periodo)";
             $stmtInsert = $pdo->prepare($sqlInsert);
 
-            $periodo = date("m/Y");
             $inseridos = 0;
             $linhas = 0;
+            $batchSize = 2000; // commit parcial para grandes volumes
+            $desdeUltimoCommit = 0;
 
             // inicia transação para acelerar
             $pdo->beginTransaction();
@@ -45,6 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvfile'])) {
             while (($data = fgetcsv($handle, 0, ";")) !== false) {
                 $linhas++;
                 $cpf = preg_replace('/\D/', '', $data[1]);
+
+                // pula se CPF já existe no período ou já foi visto neste arquivo
+                if ($cpf === '' || isset($cpfExistentes[$cpf]) || isset($cpfArquivo[$cpf])) {
+                    continue;
+                }
 
                 $stmtInsert->execute([
                     ':cod_familiar' => trim($data[0]),
@@ -59,9 +78,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvfile'])) {
                     ':periodo'      => $periodo
                 ]);
 
-                // conta apenas os realmente inseridos
                 if ($stmtInsert->rowCount() > 0) {
                     $inseridos++;
+                    $cpfArquivo[$cpf] = true; // marca como inserido neste arquivo
+                    $desdeUltimoCommit++;
+                    // commit parcial para aliviar longas transações em uploads enormes
+                    if ($desdeUltimoCommit >= $batchSize) {
+                        $pdo->commit();
+                        $pdo->beginTransaction();
+                        $desdeUltimoCommit = 0;
+                    }
                 }
             }
 
