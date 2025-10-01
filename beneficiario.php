@@ -24,7 +24,7 @@ $perPage = 50;
 
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
- 
+
 // Calculate total and active beneficiaries to determine available spots
 $pdo = Database::conexao();
 
@@ -162,7 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       </div>
       <div class="container">
         <ul class="nav flex-column">
-          <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+          <?php if ($int_nivel == 1): ?>
+            <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+          <?php endif; ?>
           <li class="nav-item"><a href="beneficiario.php" class="nav-link">Beneficiários</a></li>
           <li class="nav-item"><a href="relatorios/relat.php" class="nav-link">Relatórios</a></li>
           <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
@@ -200,10 +202,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
                 <div class="form-group">
                   <label for="cod_unidade">Unidade</label>
                   <select id="cod_unidade" name="cod_unidade" class="form-control" required>
-                    <?php 
-                      $u = new Unidade();
-                      $unidades = $u->exibirUnidade();
-                      while ($unidade = $unidades->fetch(PDO::FETCH_ASSOC)):
+                    <?php
+                    $u = new Unidade();
+                    $unidades = $u->exibirUnidade();
+                    while ($unidade = $unidades->fetch(PDO::FETCH_ASSOC)):
                     ?>
                       <option value="<?= $unidade['cod_unidade'] ?>" <?= ($unidade['cod_unidade'] == $cod_unidade) ? 'selected' : '' ?>>
                         <?= htmlspecialchars($unidade['vch_unidade']) ?>
@@ -313,74 +315,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
         <!-- Mensagens de página (sucesso/erro) -->
         <div id="pageAlert" class="alert d-none" role="alert" style="display:none;"></div>
 
-        <!-- Mensagens de página (sucesso/erro) -->
-        <div id="pageAlert" class="alert d-none" role="alert" style="display:none;"></div>
-
         <div class="table-responsive">
-        <table id="tabela" class="table table-striped table-bordered">
-          <thead>
-            <tr>
-              <th>NIS</th>
-              <th>CPF</th>
-              <th>Nome</th>
-              <th>Bairro</th>
-              <th>Localidade</th>
-              <th>Endereço</th>
-              <th>Tipo de Beneficiário</th>
-              <?php if ($int_nivel == 1 || $int_nivel == 3): ?><th>Categoria</th><?php endif; ?>
-              <th>Situação</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($beneficiarios['data'] as $row): ?>
+          <table id="tabela" class="table table-striped table-bordered">
+            <thead>
               <tr>
-                <td><?= htmlspecialchars($row["nis"]); ?></td>
-                <td><?= htmlspecialchars($row["cpf"]); ?></td>
-                <td><?= htmlspecialchars($row["nome"]); ?></td>
-                <td><?= htmlspecialchars($row["vch_bairro"]); ?></td>
-                <td><?= htmlspecialchars($row["localidade"]); ?></td>
-                <td><?= htmlspecialchars($row["endereco"]); ?></td>
-                <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
-                <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
-                  <td>
-                    <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
-                    <a href="#" class="btn btn-sm btn-warning mt-1"
-                      data-toggle="modal"
-                      data-target="#modalCategoria"
-                      data-id="<?= $row['cod_beneficiario']; ?>">
-                      Definir
-                    </a>
-                  </td>
-                <?php endif; ?>
-                <td><?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?></td>
-                <td>
-  <!-- Botão Alterar -->
-  <a href="#"
-     class="btn btn-sm btn-primary mb-1"
-     data-toggle="modal"
-     data-target="#modalAlterarBeneficiario"
-     data-id="<?= $row['cod_beneficiario']; ?>"
-     data-usuario="<?= $cod_usuario; ?>">
-     Alterar
-  </a>
-
-    <!-- Botão Inserir/Remover da cesta  -->
-<button type="button"
-        class="btn btn-sm <?= $row['situacao'] == 1 ? 'btn-danger btn-cesta' : 'btn-success btn-cesta'; ?> mb-1"
-        data-id="<?= $row['cod_beneficiario']; ?>"
-        data-situacao="<?= $row['situacao'] == 1 ? 0 : 1; ?>"
-        data-unidade="<?= $cod_unidade; ?>"
-        data-usuario="<?= $cod_usuario; ?>">
-    <?= $row['situacao'] == 1 ? 'Remover da Cesta' : 'Inserir na Cesta'; ?>
-</button>
-
-</td>
-</td>
+                <th>NIS</th>
+                <th>CPF</th>
+                <th>Nome</th>
+                <th>Bairro</th>
+                <th>Localidade</th>
+                <th>Endereço</th>
+                <th>Tipo de Beneficiário</th>
+                <?php if ($int_nivel == 1 || $int_nivel == 3): ?><th>Categoria</th><?php endif; ?>
+                <th>Situação</th>
+                <th>Ações</th>
               </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <?php foreach ($beneficiarios['data'] as $row): ?>
+                <tr>
+                  <td><?= htmlspecialchars($row["nis"]); ?></td>
+                  <td><?= htmlspecialchars($row["cpf"]); ?></td>
+                  <td><?= htmlspecialchars($row["nome"]); ?></td>
+                  <td><?= htmlspecialchars($row["vch_bairro"]); ?></td>
+                  <td><?= htmlspecialchars($row["localidade"]); ?></td>
+                  <td><?= htmlspecialchars($row["endereco"]); ?></td>
+                  <td><?= htmlspecialchars($row["vch_tipo"]); ?></td>
+                  <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
+                    <td>
+                      <?= htmlspecialchars($row["categoria"] ?? "Sem categoria"); ?><br>
+                      <a href="#" class="btn btn-sm btn-warning mt-1"
+                        data-toggle="modal"
+                        data-target="#modalCategoria"
+                        data-id="<?= $row['cod_beneficiario']; ?>">
+                        Definir
+                      </a>
+                    </td>
+                  <?php endif; ?>
+                  <td><?= $row["situacao"] == 1 ? "Incluído na Cesta" : "Fora da Cesta"; ?></td>
+                  <td>
+                    <!-- Botão Alterar -->
+                    <a href="#"
+                      class="btn btn-sm btn-primary mb-1"
+                      data-toggle="modal"
+                      data-target="#modalAlterarBeneficiario"
+                      data-id="<?= $row['cod_beneficiario']; ?>"
+                      data-usuario="<?= $cod_usuario; ?>">
+                      Alterar
+                    </a>
+
+                    <!-- Botão Inserir/Remover da cesta  -->
+                    <button type="button"
+                      class="btn btn-sm <?= $row['situacao'] == 1 ? 'btn-danger btn-cesta' : 'btn-success btn-cesta'; ?> mb-1"
+                      data-id="<?= $row['cod_beneficiario']; ?>"
+                      data-situacao="<?= $row['situacao'] == 1 ? 0 : 1; ?>"
+                      data-unidade="<?= $cod_unidade; ?>"
+                      data-usuario="<?= $cod_usuario; ?>">
+                      <?= $row['situacao'] == 1 ? 'Remover da Cesta' : 'Inserir na Cesta'; ?>
+                    </button>
+
+                  </td>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
         </div>
 
         <!-- Paginação estilo avançado -->
@@ -461,7 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
       </div>
     </div>
   </div>
-  
+
   <!-- Modal Alterar Beneficiário -->
   <div class="modal fade" id="modalAlterarBeneficiario" tabindex="-1" role="dialog" aria-labelledby="modalAlterarBeneficiarioLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -498,12 +497,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
         var codBeneficiario = button.data('id');
         $('#cod_beneficiario').val(codBeneficiario);
       });
-      
+
       $('#modalAlterarBeneficiario').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var codBeneficiario = button.data('id');
         var codUsuario = button.data('usuario');
-        
+
         // Carregar o conteúdo do formulário via AJAX
         $.ajax({
           url: 'usuarios/processamento/alterar_beneficiario.php',
@@ -520,12 +519,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           }
         });
       });
-      
+
       // Botão Remover da Cesta
       $(document).on('click', '.btn-remover', function() {
         var codBeneficiario = $(this).data('id');
         var codUnidade = $(this).data('unidade');
-        
+
         if (confirm('Tem certeza que deseja remover este beneficiário da cesta?')) {
           $.ajax({
             url: 'usuarios/processamento/remover_beneficiario.php',
@@ -538,7 +537,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             success: function(response) {
               if (response.success) {
                 showPageAlert('success', response.message);
-                setTimeout(function(){ window.location.reload(); }, 1200);
+                setTimeout(function() {
+                  window.location.reload();
+                }, 1200);
               } else {
                 showPageAlert('danger', 'Erro: ' + response.message);
               }
@@ -549,12 +550,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           });
         }
       });
-      
+
       // Botão Inserir na Cesta
       $(document).on('click', '.btn-inserir', function() {
         var codBeneficiario = $(this).data('id');
         var codUnidade = $(this).data('unidade');
-        
+
         if (confirm('Tem certeza que deseja inserir este beneficiário na cesta?')) {
           $.ajax({
             url: 'usuarios/processamento/alterar_situacao.php',
@@ -568,7 +569,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
             success: function(response) {
               if (response.success) {
                 showPageAlert('success', response.message);
-                setTimeout(function(){ window.location.reload(); }, 1200);
+                setTimeout(function() {
+                  window.location.reload();
+                }, 1200);
               } else {
                 showPageAlert('danger', 'Erro: ' + response.message);
               }
@@ -582,157 +585,183 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
     });
   </script>
   <script>
-  // Helper para mensagens de página (sucesso/erro)
-  function showPageAlert(type, message){
-    var el = document.getElementById('pageAlert');
-    if(!el) return;
-    var cls = 'alert alert-'+type+' alert-dismissible fade show';
-    el.className = cls;
-    el.style.display = '';
-    el.innerHTML = '<span>'+ (message || '') +'</span>'+
-      '<button type="button" class="close" data-dismiss="alert" aria-label="Fechar">'+
-      '<span aria-hidden="true">&times;</span></button>';
-    el.scrollIntoView({behavior:'smooth', block:'start'});
-  }
-  function clearPageAlert(){
-    var el = document.getElementById('pageAlert');
-    if(el){ el.className = 'alert d-none'; el.style.display = 'none'; el.innerHTML = ''; }
-  }
+    // Helper para mensagens de página (sucesso/erro)
+    function showPageAlert(type, message) {
+      var el = document.getElementById('pageAlert');
+      if (!el) return;
+      var cls = 'alert alert-' + type + ' alert-dismissible fade show';
+      el.className = cls;
+      el.style.display = '';
+      el.innerHTML = '<span>' + (message || '') + '</span>' +
+        '<button type="button" class="close" data-dismiss="alert" aria-label="Fechar">' +
+        '<span aria-hidden="true">&times;</span></button>';
+      el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+
+    function clearPageAlert() {
+      var el = document.getElementById('pageAlert');
+      if (el) {
+        el.className = 'alert d-none';
+        el.style.display = 'none';
+        el.innerHTML = '';
+      }
+    }
   </script>
   <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Expose vagasDisponiveis to client scripts for gating
-    window.vagasDisponiveis = <?= (int)$vagasDisponiveis ?>;
-    document.querySelectorAll(".btn-cesta").forEach(btn => {
+    document.addEventListener("DOMContentLoaded", function() {
+      // Expose vagasDisponiveis to client scripts for gating
+      window.vagasDisponiveis = <?= (int)$vagasDisponiveis ?>;
+      document.querySelectorAll(".btn-cesta").forEach(btn => {
         btn.addEventListener("click", function() {
-            const cod_beneficiario = this.dataset.id;
-            const situacao = this.dataset.situacao;
-            const cod_unidade = this.dataset.unidade;
-            const cod_usuario = this.dataset.usuario;
+          const cod_beneficiario = this.dataset.id;
+          const situacao = this.dataset.situacao;
+          const cod_unidade = this.dataset.unidade;
+          const cod_usuario = this.dataset.usuario;
 
-            // Block insertion when no vagas, provide subtle inline feedback by preventing action
-            if (parseInt(situacao, 10) === 1 && window.vagasDisponiveis <= 0) {
-                this.classList.add('disabled');
-                this.setAttribute('title', 'Sem vagas disponíveis nesta unidade');
-                return; // no alerts, no top notifications
-            }
+          // Block insertion when no vagas, provide subtle inline feedback by preventing action
+          if (parseInt(situacao, 10) === 1 && window.vagasDisponiveis <= 0) {
+            this.classList.add('disabled');
+            this.setAttribute('title', 'Sem vagas disponíveis nesta unidade');
+            return; // no alerts, no top notifications
+          }
 
-            fetch("usuarios/processamento/alterar_situacao.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `cod_beneficiario=${cod_beneficiario}&situacao=${situacao}&cod_unidade=${cod_unidade}&cod_usuario=${cod_usuario}`
+          fetch("usuarios/processamento/alterar_situacao.php", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+              },
+              body: `cod_beneficiario=${cod_beneficiario}&situacao=${situacao}&cod_unidade=${cod_unidade}&cod_usuario=${cod_usuario}`
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    showPageAlert('success', data.message || 'Operação realizada com sucesso.');
-                    setTimeout(function(){ location.reload(); }, 1200);
-                } else {
-                    console.error('Erro:', data.message);
-                    showPageAlert('danger', (data.message || 'Operação não permitida.'));
-                }
+              if (data.success) {
+                showPageAlert('success', data.message || 'Operação realizada com sucesso.');
+                setTimeout(function() {
+                  location.reload();
+                }, 1200);
+              } else {
+                console.error('Erro:', data.message);
+                showPageAlert('danger', (data.message || 'Operação não permitida.'));
+              }
             })
             .catch(err => console.error("Falha na requisição:", err));
         });
+      });
     });
-});
-</script>
+  </script>
 
-<!-- Fallback configurável de WebSocket de recarregamento (evita erros quando endpoint não responde) -->
-<script>
-(function(){
-  var defaultEndpoint = (location.protocol === 'https:'
-    ? 'wss://' + location.host + '/cesta/ws/ws'
-    : 'ws://' + location.host + '/cesta/ws/ws');
-  var endpoint = window.RELOAD_WS_ENDPOINT || defaultEndpoint;
-  try {
-    if ('WebSocket' in window){
-      var ws = new WebSocket(endpoint);
-      ws.onopen = function(){ console.log('Reload WebSocket conectado:', endpoint); };
-      ws.onmessage = function(ev){ if (ev.data === 'reload') { location.reload(); } };
-      ws.onerror = function(err){ console.warn('Reload WebSocket erro:', err); };
-      ws.onclose = function(){ console.warn('Reload WebSocket fechado'); };
-      window.ReloadSocket = ws;
-    }
-  } catch(e){ console.warn('Falha ao iniciar Reload WebSocket:', e); }
-})();
-</script>
-<script>
-$('#modalCesta').on('show.bs.modal', function (event) {
-  var button = $(event.relatedTarget); // Botão que abriu o modal
-  var id = button.data('id');
-  var situacao = button.data('situacao');
-  var acao = button.data('acao');
-
-  // Atualiza os inputs hidden do form
-  var modal = $(this);
-  modal.find('#modal_cod_beneficiario').val(id);
-  modal.find('#modal_situacao').val(situacao);
-
-  // Texto da confirmação
-  modal.find('#textoConfirmacao').text("Deseja realmente " + acao + "?");
-});
-</script>
-<script>
-$(function() {
-  function showMessage(text, type) {
-    var box = $('#mensagem-acao');
-    if (!box.length) {
-      $('body').append('<div id="mensagem-acao" class="alert d-none" style="position:fixed;top:20px;right:20px;z-index:9999;"></div>');
-      box = $('#mensagem-acao');
-    }
-    box.removeClass('d-none alert-success alert-danger').addClass(type === 'success' ? 'alert-success' : 'alert-danger');
-    box.text(text).show();
-    clearTimeout(window._msgTimeout);
-    window._msgTimeout = setTimeout(function() {
-      box.fadeOut(300, function(){ box.addClass('d-none').show(); });
-    }, 4000);
-  }
-
-  $(document).on('click', '.btn-cesta', function(e) {
-    e.preventDefault();
-    var btn = $(this);
-    var cod = btn.data('id');
-    var situacao = parseInt(btn.data('situacao'), 10); // 1 = inserir, 0 = remover
-    var unidade = btn.data('unidade');
-    var usuario = btn.data('usuario');
-
-    var texto = (situacao === 1) ? 'Deseja inserir este beneficiário na cesta?' : 'Deseja remover este beneficiário da cesta?';
-    if (!confirm(texto)) return;
-
-    $.ajax({
-      url: 'usuarios/processamento/alterar_situacao.php',
-      method: 'POST',
-      dataType: 'json',
-      data: {
-        cod_beneficiario: cod,
-        situacao: situacao,
-        cod_unidade: unidade,
-        cod_usuario: usuario
-      }
-    }).done(function(resp) {
-      if (resp.success) {
-        showMessage(resp.message, 'success');
-
-        // Atualiza botão
-        if (situacao === 1) {
-          btn.removeClass('btn-success').addClass('btn-danger').text('Remover da Cesta').data('situacao', 0);
-        } else {
-          btn.removeClass('btn-danger').addClass('btn-success').text('Inserir na Cesta').data('situacao', 1);
+  <!-- Fallback configurável de WebSocket de recarregamento (evita erros quando endpoint não responde) -->
+  <script>
+    (function() {
+      var defaultEndpoint = (location.protocol === 'https:' ?
+        'wss://' + location.host + '/cesta/ws/ws' :
+        'ws://' + location.host + '/cesta/ws/ws');
+      var endpoint = window.RELOAD_WS_ENDPOINT || defaultEndpoint;
+      try {
+        if ('WebSocket' in window) {
+          var ws = new WebSocket(endpoint);
+          ws.onopen = function() {
+            console.log('Reload WebSocket conectado:', endpoint);
+          };
+          ws.onmessage = function(ev) {
+            if (ev.data === 'reload') {
+              location.reload();
+            }
+          };
+          ws.onerror = function(err) {
+            console.warn('Reload WebSocket erro:', err);
+          };
+          ws.onclose = function() {
+            console.warn('Reload WebSocket fechado');
+          };
+          window.ReloadSocket = ws;
         }
-
-        // Atualiza célula situação
-        btn.closest('tr').find('.situacao-cell').text(situacao === 1 ? 'Incluído na Cesta' : 'Fora da Cesta');
-
-      } else {
-        showMessage(resp.message || 'Erro ao processar.', 'danger');
+      } catch (e) {
+        console.warn('Falha ao iniciar Reload WebSocket:', e);
       }
-    }).fail(function(xhr, status) {
-      showMessage('Erro na requisição: ' + status, 'danger');
+    })();
+  </script>
+  <script>
+    $('#modalCesta').on('show.bs.modal', function(event) {
+      var button = $(event.relatedTarget); // Botão que abriu o modal
+      var id = button.data('id');
+      var situacao = button.data('situacao');
+      var acao = button.data('acao');
+
+      // Atualiza os inputs hidden do form
+      var modal = $(this);
+      modal.find('#modal_cod_beneficiario').val(id);
+      modal.find('#modal_situacao').val(situacao);
+
+      // Texto da confirmação
+      modal.find('#textoConfirmacao').text("Deseja realmente " + acao + "?");
     });
-  });
-});
-</script>
+  </script>
+  <script>
+    $(function() {
+      function showMessage(text, type) {
+        var box = $('#mensagem-acao');
+        if (!box.length) {
+          $('body').append('<div id="mensagem-acao" class="alert d-none" style="position:fixed;top:20px;right:20px;z-index:9999;"></div>');
+          box = $('#mensagem-acao');
+        }
+        box.removeClass('d-none alert-success alert-danger').addClass(type === 'success' ? 'alert-success' : 'alert-danger');
+        box.text(text).show();
+        clearTimeout(window._msgTimeout);
+        window._msgTimeout = setTimeout(function() {
+          box.fadeOut(300, function() {
+            box.addClass('d-none').show();
+          });
+        }, 4000);
+      }
+
+      $(document).on('click', '.btn-cesta', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var cod = btn.data('id');
+        var situacao = parseInt(btn.data('situacao'), 10); // 1 = inserir, 0 = remover
+        var unidade = btn.data('unidade');
+        var usuario = btn.data('usuario');
+
+        var texto = (situacao === 1) ? 'Deseja inserir este beneficiário na cesta?' : 'Deseja remover este beneficiário da cesta?';
+        if (!confirm(texto)) return;
+
+        $.ajax({
+          url: 'usuarios/processamento/alterar_situacao.php',
+          method: 'POST',
+          dataType: 'json',
+          data: {
+            cod_beneficiario: cod,
+            situacao: situacao,
+            cod_unidade: unidade,
+            cod_usuario: usuario
+          }
+        }).done(function(resp) {
+          if (resp.success) {
+            showMessage(resp.message, 'success');
+
+            // Atualiza botão
+            if (situacao === 1) {
+              btn.removeClass('btn-success').addClass('btn-danger').text('Remover da Cesta').data('situacao', 0);
+            } else {
+              btn.removeClass('btn-danger').addClass('btn-success').text('Inserir na Cesta').data('situacao', 1);
+            }
+
+            // Atualiza célula situação
+            btn.closest('tr').find('.situacao-cell').text(situacao === 1 ? 'Incluído na Cesta' : 'Fora da Cesta');
+
+          } else {
+            showMessage(resp.message || 'Erro ao processar.', 'danger');
+          }
+        }).fail(function(xhr, status) {
+          showMessage('Erro na requisição: ' + status, 'danger');
+        });
+      });
+    });
+  </script>
 
 
 </body>
@@ -746,7 +775,7 @@ $(function() {
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        
+
         <div class="modal-body">
           <p id="textoConfirmacao">Tem certeza?</p>
           <input type="hidden" name="cod_beneficiario" id="modal_cod_beneficiario">
@@ -754,7 +783,7 @@ $(function() {
           <input type="hidden" name="cod_usuario" value="<?= $cod_usuario; ?>">
           <input type="hidden" name="cod_unidade" value="<?= $cod_unidade; ?>">
         </div>
-        
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-primary">Confirmar</button>

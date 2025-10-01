@@ -143,16 +143,16 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
         </div>
         <div class="container" style="width: 200px;">
           <ul class="nav flex-column">
-            <li class="nav-item">
-              <a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a>
-            </li>
+            <?php if ($int_nivel == 1): ?>
+              <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+            <?php endif; ?>
             <li class="nav-item">
               <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
             </li>
             <li class="nav-item">
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
-            <?php if ($int_nivel == 1): ?>
+            <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
               <li class="nav-item"><a href="categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($int_nivel == 1): ?>

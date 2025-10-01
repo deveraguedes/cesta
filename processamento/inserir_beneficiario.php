@@ -27,24 +27,14 @@ $b->setCod_unidade($cod_unidade);
 $b->setSituacao(1); // 1 = Incluído na cesta
 
 try {
-    // Verificar se há saldo disponível
-    $pdo = Database::conexao();
-    $stmt = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
-    $stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
-    $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$result || $result['saldo'] <= 0) {
-        echo "<script>alert('Não há vagas disponíveis.'); window.location='../beneficiario.php';</script>";
-        exit;
+    // Incluir o beneficiário na cesta (o método já valida saldo e ajusta)
+    $ok = $b->incluirBeneficiario();
+    if ($ok) {
+        echo "<script>alert('Beneficiário incluído com sucesso!'); window.location='../beneficiario.php';</script>";
+    } else {
+        echo "<script>alert('Não foi possível incluir o beneficiário.'); window.location='../beneficiario.php';</script>";
     }
-    
-    // Incluir o beneficiário na cesta
-    // O método incluirBeneficiario já atualiza o saldo
-    $b->incluirBeneficiario();
-    
-    echo "<script>alert('Beneficiário incluído com sucesso!'); window.location='../beneficiario.php';</script>";
-} catch (Exception $e) {
-    echo "<script>alert('Erro ao incluir beneficiário: " . $e->getMessage() . "'); window.location='../beneficiario.php';</script>";
+} catch (Throwable $e) {
+    echo "<script>alert('Erro ao incluir beneficiário: " . htmlspecialchars($e->getMessage()) . "'); window.location='../beneficiario.php';</script>";
 }
 ?>

@@ -272,6 +272,11 @@ try {
         ];
 
         if ($beneficiario->alterarBeneficiario($dados, (int)$user_level)) {
+            // If not AJAX, redirect to beneficiario.php
+            if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+                header('Location: ../../beneficiario.php');
+                exit;
+            }
             echo json_encode(['success' => true, 'message' => 'Beneficiário atualizado com sucesso']);
             exit;
         } else {

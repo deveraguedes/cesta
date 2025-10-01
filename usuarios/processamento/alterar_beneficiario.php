@@ -126,12 +126,11 @@ $categorias = $c->listarCategorias();
             </select>
          </div>
 
-         <button type="submit" class="btn btn-success">Salvar Dados</button>
          <input type="hidden" name="MM_action" value="2">
+      <div class="modal-footer">
+         <button type="submit" class="btn btn-success">Salvar Dados</button>
+         <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+      </div>
       </form>
-   </div>
-
-   <div class="modal-footer">
-      <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
    </div>
 </div>

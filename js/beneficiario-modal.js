@@ -242,7 +242,14 @@
           if ($modal && $modal.length) {
             try { $modal.modal('hide'); } catch(e){}
           }
-          setTimeout(function(){ try { location.reload(); } catch(e){} }, 1200);
+          // Reload immediately with cache-busting to reflect the new row right away
+          try {
+            var url = window.location.href;
+            var sep = url.indexOf('?') === -1 ? '?' : '&';
+            window.location.replace(url + sep + 't=' + Date.now());
+          } catch(e){
+            try { location.reload(true); } catch(_) {}
+          }
         } else {
           const msg = (resp && resp.message) ? resp.message : 'Erro ao processar a solicitação.';
           try { if (typeof showPageAlert === 'function') showPageAlert('danger', msg); } catch(e){}

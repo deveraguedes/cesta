@@ -126,16 +126,16 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
         </div>
         <div class="container" style="width: 200px;">
           <ul class="nav flex-column">
-            <li class="nav-item">
-              <a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a>
-            </li>
+            <?php if ($int_nivel == 1): ?>
+              <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+            <?php endif; ?>
             <li class="nav-item">
               <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
             </li>
             <li class="nav-item">
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
-            <?php if ($currentLevel == 1): ?>
+            <?php if ($currentLevel == 1 || $int_nivel == 3): ?>
               <li class="nav-item"><a href="../categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($currentLevel == 1): ?>
@@ -524,11 +524,11 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                     $modal.find('#editCodUsuario').val(u.cod_usuario);
                     $modal.find('#editNome').val(u.vch_nome);
                     $modal.find('#editLogin').val(u.vch_login);
-                      $modal.find('#editUnidade').val(u.cod_unidade);
-                      // set access level if provided
-                      if (u.int_nivel !== undefined && $modal.find('#editIntNivel').length) {
-                        $modal.find('#editIntNivel').val(String(u.int_nivel));
-                      }
+                    $modal.find('#editUnidade').val(u.cod_unidade);
+                    // set access level if provided
+                    if (u.int_nivel !== undefined && $modal.find('#editIntNivel').length) {
+                      $modal.find('#editIntNivel').val(String(u.int_nivel));
+                    }
                     // clear password inputs
                     $modal.find('#editSenha, #editSenhaConfirm').val('');
 
