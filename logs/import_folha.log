@@ -1,0 +1,85 @@
+[2025-10-01 16:07:43] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php5E5A.tmp","size":23650466}
+[2025-10-01 16:12:43] Upload recebido {"tmpName":"C:\\xampp\\tmp\\phpF20C.tmp","size":23650466}
+[2025-10-01 16:19:37] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php3FF1.tmp","size":23650466}
+[2025-10-01 16:26:29] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php8A4C.tmp","size":23650466}
+[2025-10-01 16:30:23] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php1DA6.tmp","size":23650466}
+[2025-10-01 16:30:38] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php583F.tmp","size":23650466}
+[2025-10-02 13:03:53] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php6E7B.tmp","size":23650466}
+[2025-10-02 13:03:53] Delimitador CSV detectado {"delim":";","header":"COD_FAMILIAR;CPF;NIS;NOME;SITFAM;ENDERECO;BAIRRO;CEP;TELEFONE1;TELEFONE2"}
+[2025-10-02 13:03:53] CPFs existentes pré-carregados {"count":0,"periodo":"10\/2025"}
+[2025-10-02 13:03:55] Commit parcial realizado {"inseridos":2000,"linhas_processadas":2000}
+[2025-10-02 13:03:57] Commit parcial realizado {"inseridos":4000,"linhas_processadas":4000}
+[2025-10-02 13:03:59] Commit parcial realizado {"inseridos":6000,"linhas_processadas":6000}
+[2025-10-02 13:04:01] Commit parcial realizado {"inseridos":8000,"linhas_processadas":8000}
+[2025-10-02 13:04:04] Commit parcial realizado {"inseridos":10000,"linhas_processadas":10000}
+[2025-10-02 13:04:06] Commit parcial realizado {"inseridos":12000,"linhas_processadas":12000}
+[2025-10-02 13:04:07] Commit parcial realizado {"inseridos":14000,"linhas_processadas":14000}
+[2025-10-02 13:04:09] Commit parcial realizado {"inseridos":16000,"linhas_processadas":16000}
+[2025-10-02 13:04:10] Commit parcial realizado {"inseridos":18000,"linhas_processadas":18000}
+[2025-10-02 13:04:12] Commit parcial realizado {"inseridos":20000,"linhas_processadas":20000}
+[2025-10-02 13:04:13] Commit parcial realizado {"inseridos":22000,"linhas_processadas":22000}
+[2025-10-02 13:04:15] Commit parcial realizado {"inseridos":24000,"linhas_processadas":24000}
+[2025-10-02 13:04:16] Commit parcial realizado {"inseridos":26000,"linhas_processadas":26000}
+[2025-10-02 13:04:18] Commit parcial realizado {"inseridos":28000,"linhas_processadas":28000}
+[2025-10-02 13:04:20] Commit parcial realizado {"inseridos":30000,"linhas_processadas":30000}
+[2025-10-02 13:04:21] Commit parcial realizado {"inseridos":32000,"linhas_processadas":32000}
+[2025-10-02 13:04:23] Commit parcial realizado {"inseridos":34000,"linhas_processadas":34000}
+[2025-10-02 13:04:24] Commit parcial realizado {"inseridos":36000,"linhas_processadas":36000}
+[2025-10-02 13:04:26] Commit parcial realizado {"inseridos":38000,"linhas_processadas":38000}
+[2025-10-02 13:04:27] Commit parcial realizado {"inseridos":40000,"linhas_processadas":40000}
+[2025-10-02 13:04:29] Commit parcial realizado {"inseridos":42000,"linhas_processadas":42001}
+[2025-10-02 13:04:29] Importação concluída {"inseridos":42969,"ignorados_ou_duplicados":1,"linhas_lidas":42970}
+[2025-10-02 13:38:58] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php8B11.tmp","size":23650466}
+[2025-10-02 13:38:58] Delimitador CSV detectado {"delim":";","header":"COD_FAMILIAR;CPF;NIS;NOME;SITFAM;ENDERECO;BAIRRO;CEP;TELEFONE1;TELEFONE2"}
+[2025-10-02 13:38:58] CPFs existentes pré-carregados {"count":0,"periodo":"10\/2025"}
+[2025-10-02 13:38:59] Commit parcial realizado {"inseridos":2000,"linhas_processadas":2000}
+[2025-10-02 13:39:01] Commit parcial realizado {"inseridos":4000,"linhas_processadas":4000}
+[2025-10-02 13:39:02] Commit parcial realizado {"inseridos":6000,"linhas_processadas":6000}
+[2025-10-02 13:39:04] Commit parcial realizado {"inseridos":8000,"linhas_processadas":8000}
+[2025-10-02 13:39:05] Commit parcial realizado {"inseridos":10000,"linhas_processadas":10000}
+[2025-10-02 13:39:07] Commit parcial realizado {"inseridos":12000,"linhas_processadas":12000}
+[2025-10-02 13:39:08] Commit parcial realizado {"inseridos":14000,"linhas_processadas":14000}
+[2025-10-02 13:39:10] Commit parcial realizado {"inseridos":16000,"linhas_processadas":16000}
+[2025-10-02 13:39:12] Commit parcial realizado {"inseridos":18000,"linhas_processadas":18000}
+[2025-10-02 13:39:14] Commit parcial realizado {"inseridos":20000,"linhas_processadas":20000}
+[2025-10-02 13:39:16] Commit parcial realizado {"inseridos":22000,"linhas_processadas":22000}
+[2025-10-02 13:39:17] Commit parcial realizado {"inseridos":24000,"linhas_processadas":24000}
+[2025-10-02 13:39:19] Commit parcial realizado {"inseridos":26000,"linhas_processadas":26000}
+[2025-10-02 13:39:21] Commit parcial realizado {"inseridos":28000,"linhas_processadas":28000}
+[2025-10-02 13:39:22] Commit parcial realizado {"inseridos":30000,"linhas_processadas":30000}
+[2025-10-02 13:39:24] Commit parcial realizado {"inseridos":32000,"linhas_processadas":32000}
+[2025-10-02 13:39:26] Commit parcial realizado {"inseridos":34000,"linhas_processadas":34000}
+[2025-10-02 13:39:27] Commit parcial realizado {"inseridos":36000,"linhas_processadas":36000}
+[2025-10-02 13:39:29] Commit parcial realizado {"inseridos":38000,"linhas_processadas":38000}
+[2025-10-02 13:39:31] Commit parcial realizado {"inseridos":40000,"linhas_processadas":40000}
+[2025-10-02 13:39:32] Linha ignorada {"linha_csv":41222,"cpf":"0","nome":"NATALY DA CONCEICAO ALBUQUERQUE DE SOUZA","motivo":"Duplicado no arquivo"}
+[2025-10-02 13:39:32] Commit parcial realizado {"inseridos":42000,"linhas_processadas":42001}
+[2025-10-02 13:39:33] Importação concluída {"inseridos":42969,"ignorados_ou_duplicados":1,"linhas_lidas":42970}
+[2025-10-02 13:49:06] Upload recebido {"tmpName":"C:\\xampp\\tmp\\phpD185.tmp","size":23650466}
+[2025-10-02 13:49:18] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php95.tmp","size":23650466}
+[2025-10-02 13:49:25] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php1E9D.tmp","size":23650466}
+[2025-10-02 13:49:57] Upload recebido {"tmpName":"C:\\xampp\\tmp\\php99CA.tmp","size":23650466}
+[2025-10-02 13:49:57] Delimitador CSV detectado {"delim":";","header":"COD_FAMILIAR;CPF;NIS;NOME;SITFAM;ENDERECO;BAIRRO;CEP;TELEFONE1;TELEFONE2"}
+[2025-10-02 13:49:57] CPFs existentes pré-carregados {"count":0,"periodo":"10\/2025"}
+[2025-10-02 13:49:59] Commit parcial realizado {"inseridos":2000,"linhas_processadas":2000}
+[2025-10-02 13:50:01] Commit parcial realizado {"inseridos":4000,"linhas_processadas":4000}
+[2025-10-02 13:50:03] Commit parcial realizado {"inseridos":6000,"linhas_processadas":6000}
+[2025-10-02 13:50:04] Commit parcial realizado {"inseridos":8000,"linhas_processadas":8000}
+[2025-10-02 13:50:06] Commit parcial realizado {"inseridos":10000,"linhas_processadas":10000}
+[2025-10-02 13:50:08] Commit parcial realizado {"inseridos":12000,"linhas_processadas":12000}
+[2025-10-02 13:50:10] Commit parcial realizado {"inseridos":14000,"linhas_processadas":14000}
+[2025-10-02 13:50:12] Commit parcial realizado {"inseridos":16000,"linhas_processadas":16000}
+[2025-10-02 13:50:13] Commit parcial realizado {"inseridos":18000,"linhas_processadas":18000}
+[2025-10-02 13:50:15] Commit parcial realizado {"inseridos":20000,"linhas_processadas":20000}
+[2025-10-02 13:50:17] Commit parcial realizado {"inseridos":22000,"linhas_processadas":22000}
+[2025-10-02 13:50:18] Commit parcial realizado {"inseridos":24000,"linhas_processadas":24000}
+[2025-10-02 13:50:19] Commit parcial realizado {"inseridos":26000,"linhas_processadas":26000}
+[2025-10-02 13:50:21] Commit parcial realizado {"inseridos":28000,"linhas_processadas":28000}
+[2025-10-02 13:50:22] Commit parcial realizado {"inseridos":30000,"linhas_processadas":30000}
+[2025-10-02 13:50:24] Commit parcial realizado {"inseridos":32000,"linhas_processadas":32000}
+[2025-10-02 13:50:26] Commit parcial realizado {"inseridos":34000,"linhas_processadas":34000}
+[2025-10-02 13:50:27] Commit parcial realizado {"inseridos":36000,"linhas_processadas":36000}
+[2025-10-02 13:50:29] Commit parcial realizado {"inseridos":38000,"linhas_processadas":38000}
+[2025-10-02 13:50:30] Commit parcial realizado {"inseridos":40000,"linhas_processadas":40000}
+[2025-10-02 13:50:32] Commit parcial realizado {"inseridos":42000,"linhas_processadas":42000}
+[2025-10-02 13:50:32] Importação concluída {"inseridos":42970,"ignorados_ou_duplicados":0,"linhas_lidas":42970}

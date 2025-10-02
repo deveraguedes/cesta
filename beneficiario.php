@@ -315,6 +315,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
         <!-- Mensagens de página (sucesso/erro) -->
         <div id="pageAlert" class="alert d-none" role="alert" style="display:none;"></div>
 
+        <?php
+        // Modo debug desativado: não exibir logs temporários de importação
+        if (!empty($_SESSION['import_debug'])) {
+          unset($_SESSION['import_debug']);
+        }
+        ?>
+
         <div class="table-responsive">
           <table id="tabela" class="table table-striped table-bordered">
             <thead>
