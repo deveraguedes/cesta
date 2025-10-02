@@ -10,7 +10,7 @@ class Usuarios {
     public $vch_senha;
     public $int_nivel;
     public $vch_email;
-    public $data_cadastro;
+    public $date_cadastro;
     public $date_alteracao;
     public $cod_categoria_usuario;
     public $vch_status;
@@ -40,7 +40,7 @@ class Usuarios {
     }
 
     public function setDate_cadastro($data_cadastro) {
-        $this->data_cadastro = $data_cadastro;
+        $this->date_cadastro = $data_cadastro;
     }
 
     public function setCod_unidade($cod_unidade) {
@@ -96,7 +96,7 @@ class Usuarios {
     }
 
     public function getCod_empresa() {
-        return $this->cod_empresa;
+        return $this->cod_unidade;
     }
 
     public function getToken() {
@@ -132,15 +132,15 @@ class Usuarios {
             $pdo = Database::conexao();
             $pdo->beginTransaction();
             $this->vch_login = $this->gerar_login();
-            $this->vch_senha_plain = $this->gerar_senha();
+            $vch_senha_plain = $this->gerar_senha();
             $resultado = $this->consultarUsuarioLogin($this->vch_login);
 
             while(count($resultado) != 0){
                 $this->vch_login= $this->gerar_login();
-                $this->vch_senha_plain = $this->gerar_senha();
+                $vch_senha_plain = $this->gerar_senha();
                 $resultado = $this->consultarUsuarioLogin($this->vch_login);
             }
-            $this->vch_senha=(md5($this->vch_senha_plain));
+            $this->vch_senha = md5($vch_senha_plain);
             $consulta = $pdo->prepare("INSERT into beneficiario.usuario( vch_nome, vch_login, cod_unidade, vch_senha, int_nivel, data_cadastro)
                    values ( :vch_nome, :vch_login, :cod_unidade, :vch_senha, :int_nivel, :data_cadastro);");
             //$consulta->bindParam(':cod_usuario', $this->cod_usuario);
@@ -149,14 +149,14 @@ class Usuarios {
             $consulta->bindParam(':vch_senha', $this->vch_senha);
             $consulta->bindParam(':int_nivel', $this->int_nivel);
             $consulta->bindParam(':cod_unidade', $this->cod_unidade);
-            $consulta->bindParam(':data_cadastro', $this->data_cadastro);
+            $consulta->bindParam(':data_cadastro', $this->date_cadastro);
             $consulta->execute();
             
             $consulta = $pdo->prepare("INSERT into beneficiario.usuario_temporario (vch_senha, cod_usuario)
             values(:vch_senha_plain, :cod_usuario)");
     
             $this->cod_usuario = $pdo->lastInsertId();
-            $consulta->bindParam(':vch_senha_plain', $this->vch_senha_plain);
+            $consulta->bindParam(':vch_senha_plain', $vch_senha_plain);
             $consulta->bindParam(':cod_usuario', $this->cod_usuario);
             $consulta->execute();
             $pdo->commit();
@@ -473,7 +473,7 @@ class Usuario
              , u.vch_nome
              , u.vch_login
              , u.cod_unidade
-             , un.vch_nome as nome_unidade
+             , u.vch_nome as nome_unidade
              , u.data_cadastro
              , u.int_nivel
           FROM beneficiario.usuario u

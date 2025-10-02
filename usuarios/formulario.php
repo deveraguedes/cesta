@@ -120,7 +120,8 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
           <h3>Bem-vindo <br> <?= htmlspecialchars($firstName); ?></h3>
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a href="../processamento/logout.php" class="nav-link">Sair</a>
+              <?php require_once __DIR__ . '/../baseurl.php'; ?>
+              <a href="<?= abs_url('processamento/logout.php') ?>" class="nav-link">Sair</a>
             </li>
           </ul>
         </div>
@@ -465,7 +466,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                     try {
                       const un = filtro.value || 0;
                       const resp = await fetch(
-                        `processamento/listar_usuarios.php?unidade=${un}&page=${page}&per_page=${perPage}`
+                        `<?= abs_url('usuarios/processamento/listar_usuarios.php') ?>?unidade=${un}&page=${page}&per_page=${perPage}`
                       );
                       let text = await resp.text();
                       text = text.replace(/^[\s\xEF\xBB\xBF]+/, '');
@@ -560,7 +561,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                         console.log('FormData:', k, v);
                       }
                       try {
-                        const res = await fetch('processamento/editar_usuario.php', {
+                        const res = await fetch('<?= abs_url('usuarios/processamento/editar_usuario.php') ?>', {
                           method: 'POST',
                           body: data
                         });

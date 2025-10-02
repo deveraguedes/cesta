@@ -141,7 +141,7 @@ try {
         $sf->bindValue(':cpf', $cpf_digits);
         $sf->execute();
         if ($sf->fetch()) {
-            echo json_encode(['success' => false, 'message' => 'CPF já está na folha de pagamento']);
+            echo json_encode(['success' => false, 'message' => 'CPF já está na folha de pagamento do Bolsa Família']);
             exit;
         }
 
@@ -179,7 +179,7 @@ try {
         $sf2->bindValue(':nis', $nis_digits);
         $sf2->execute();
         if ($sf2->fetch()) {
-            echo json_encode(['success' => false, 'message' => 'NIS já está na folha de pagamento']);
+            echo json_encode(['success' => false, 'message' => 'NIS já está na folha de pagamento do Bolsa Família']);
             exit;
         }
 

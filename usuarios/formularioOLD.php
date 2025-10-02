@@ -392,9 +392,9 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
         async function carregar(page) {
           try {
             const un = filtro.value || 0;
-            const resp = await fetch(
-              `processamento/listar_usuarios.php?unidade=${un}&page=${page}&per_page=${perPage}`
-            );
+          const resp = await fetch(
+            `<?= abs_url('usuarios/processamento/listar_usuarios.php') ?>?unidade=${un}&page=${page}&per_page=${perPage}`
+          );
             let text = await resp.text();
             text = text.replace(/^[\s\xEF\xBB\xBF]+/, '');
             const json = JSON.parse(text);
@@ -482,7 +482,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
               console.log('FormData:', k, v);
             }
             try {
-              const res = await fetch('processamento/editar_usuario.php', {
+              const res = await fetch('<?= abs_url('usuarios/processamento/editar_usuario.php') ?>', {
                 method: 'POST',
                 body: data
               });
@@ -514,7 +514,7 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
         async function deletarUsuario(id) {
           if (!confirm('Deseja realmente excluir este usuário?')) return;
           try {
-            const res = await fetch('processamento/deletar_usuario.php', {
+            const res = await fetch('<?= abs_url('usuarios/processamento/deletar_usuario.php') ?>', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

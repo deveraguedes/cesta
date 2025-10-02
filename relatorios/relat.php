@@ -144,29 +144,30 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
       <div id="sidebar" class="p-3">
         <div class="container text-center" style="width: 200px; padding-bottom: 10  px; border-bottom: 1px solid #3d3d3dff; margin-bottom: 20px;">
           <h3>Bem-vindo <br> <?= htmlspecialchars($firstName); ?></h3>
+          <?php require_once __DIR__ . '/../baseurl.php'; ?>
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a href="../processamento/logout.php" class="nav-link">Sair</a>
+              <a href="<?= abs_url('processamento/logout.php') ?>" class="nav-link">Sair</a>
             </li>
           </ul>
         </div>
         <div class="container" style="width: 200px;">
           <ul class="nav flex-column">
             <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+              <li class="nav-item"><a href="<?= abs_url('usuarios/formulario.php') ?>" class="nav-link">Criar Usuários</a></li>
             <?php endif; ?>
             <li class="nav-item">
-              <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
+              <a href="<?= abs_url('beneficiario.php') ?>" class="nav-link">Beneficiários</a>
             </li>
             <li class="nav-item">
-              <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
+              <a href="<?= abs_url('relatorios/relat.php') ?>" class="nav-link">Relatórios</a>
             </li>
             <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
-              <li class="nav-item"><a href="/cesta/categoria.php" class="nav-link">Categorias</a></li>
+              <li class="nav-item"><a href="<?= abs_url('categoria.php') ?>" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($int_nivel == 1): ?>
               <li class="nav-item">
-                <form action="../processamento/inport_tab_pagamento.php" method="post" enctype="multipart/form-data" style="display:inline;">
+                <form action="<?= abs_url('processamento/inport_tab_pagamento.php') ?>" method="post" enctype="multipart/form-data" style="display:inline;">
                   <label class="nav-link mb-0" style="cursor:pointer; font-weight: normal;padding: 10px; padding-left: 15px;">
                     Importar folha de pagamento
                     <input type="file" name="csvfile" accept=".csv" style="display:none;" onchange="this.form.submit()">
@@ -185,7 +186,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
         <div class="login-card" style="width: 100%;">
           <div class="row mb-4" style="padding-bottom: 10px; padding-top: 10px; width: 100%;">
             <div class="col-md-5 text-center">
-              <h1>Relatório</h1>
+              <h1>Relatórios</h1>
             </div>
             <div class="col-md-7 text-center" style="padding-top: 10px; left: 0;">
               <div class="btn-group">
@@ -292,12 +293,12 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
 
     // Export full dataset (all pages) to CSV
     function exportFullCSV() {
-      window.location.href = "relat_export.php<?= $showAll ? '?all=1' : '' ?>";
+      window.location.href = "<?= abs_url('relatorios/relat_export.php') ?><?= $showAll ? '?all=1' : '' ?>";
     }
 
     // Print full dataset (all pages)
     function printFullTable() {
-      window.open("relat_print.php<?= $showAll ? '?all=1' : '' ?>", "_blank");
+      window.open("<?= abs_url('relatorios/relat_print.php') ?><?= $showAll ? '?all=1' : '' ?>", "_blank");
     }
   </script>
 </body>
