@@ -23,10 +23,7 @@ try {
     $int_nivel = $_SESSION['int_level'] ?? 2;
     $cod_unidade = $_SESSION['cod_unidade'] ?? 0;
     
-    // Se for nível 1 (admin), pode ver todos; se for nível 2, só vê da sua unidade
-    $codUn = ($int_nivel == 1) ? 
-        (filter_input(INPUT_GET, 'unidade', FILTER_VALIDATE_INT) ?: 0) : 
-        $cod_unidade;
+
         
     $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;
     $per  = filter_input(INPUT_GET, 'per_page', FILTER_VALIDATE_INT) ?: 6;

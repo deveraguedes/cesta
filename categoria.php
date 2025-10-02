@@ -13,7 +13,7 @@ if (!$l->isloggedin() || ($_SESSION['int_level'] ?? 0) != 1) {
 }
 
 $categoria = new Categoria();
-$categoria->criarCategoriasPadrao(); // garante categorias padrão
+
 
 //  Adicionar categoria
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["nome"]) && ($_SESSION['int_level'] ?? 0) == 1) {
