@@ -13,13 +13,13 @@ class Categoria {
     public function listarCategorias() {
         $sql = "SELECT cod_categoria, vch_categoria 
                   FROM beneficiario.categoria 
-              ORDER BY vch_categoria ASC";
+              ORDER BY cod_categoria ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Cria categorias padrão caso não existam
+    /*Cria categorias padrão caso não existam
     public function criarCategoriasPadrao() {
         $categoriasPadrao = [
             'Músico',
@@ -40,8 +40,8 @@ class Categoria {
             $stmt->bindValue(':nome2', $nome, PDO::PARAM_STR);
             $stmt->execute();
         }
-    }
-
+ }
+    */
     // Adiciona uma nova categoria (com verificação de duplicata)
     public function adicionarCategoria($nome) {
         if (empty(trim($nome))) {

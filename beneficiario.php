@@ -55,9 +55,9 @@ $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
 $c = new Categoria();
-// Allow administrators (1) and sedes (3) to manage categories
+//s Allow administrators (1) and sedes (3) to manage categories
 if ($int_nivel == 1 || $int_nivel == 3) {
-  $c->criarCategoriasPadrao();
+  
   $categorias = $c->listarCategorias();
 }
 
