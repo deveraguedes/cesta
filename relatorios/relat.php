@@ -3,6 +3,9 @@ if (session_status() == PHP_SESSION_NONE) {
   session_start();
 }
 include_once "../classes/beneficiario.class.php";
+include_once "../classes/categoria.class.php";
+
+
 
 if (!isset($_SESSION['user_id'])) {
   header('Location: ../usuarios/login.php'); // Redireciona para a página de login se não estiver logado
@@ -19,7 +22,13 @@ $perPage = 20;
 
 $cod_unidade = $_SESSION["cod_unidade"] ?? 0;
 $int_nivel   = $_SESSION["int_level"] ?? 2;
-if ($showAll) $cod_unidade = 0;
+
+// Usuários de nível 2 só podem ver sua própria unidade
+if ($int_nivel == 2) {
+    $showAll = false;
+} elseif ($showAll) {
+    $cod_unidade = 0;
+}
 
 function formatarCPF($cpf)
 {
@@ -144,7 +153,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
         <div class="container" style="width: 200px;">
           <ul class="nav flex-column">
             <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
+              <li class="nav-item"><a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
             <?php endif; ?>
             <li class="nav-item">
               <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
@@ -153,7 +162,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
               <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
             </li>
             <?php if ($int_nivel == 1 || $int_nivel == 3): ?>
-              <li class="nav-item"><a href="../categoria.php" class="nav-link">Categorias</a></li>
+              <li class="nav-item"><a href="/cesta/categoria.php" class="nav-link">Categorias</a></li>
             <?php endif; ?>
             <?php if ($int_nivel == 1): ?>
               <li class="nav-item">
@@ -183,7 +192,9 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
                 <div class="input-group" style="margin-bottom: 10px; padding-right: 10px; width: 100%; left: 0;">
                   <input type="text" style="width: 100%; left: 0;" class="form-control" placeholder="Pesquisar..." id="searchInput">
                 </div>
+                <?php if ($int_nivel == 1): ?>
                 <a href="?all=1" class="btn btn-primary color">Todas as unidades</a>
+                <?php endif; ?>
                 <a href="?page=1" class="btn btn-primary color">Minha Unidade</a>
                 <button onclick="exportFullCSV()" class="btn btn-success color">Exportar CSV</button>
                 <!-- <button onclick="printFullTable()" class="btn btn-outline-dark">🖨️ Imprimir Lista</button> -->

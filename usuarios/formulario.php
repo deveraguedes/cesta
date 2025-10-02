@@ -125,42 +125,41 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
           </ul>
         </div>
         <div class="container" style="width: 200px;">
-          <ul class="nav flex-column">
-            <?php if ($int_nivel == 1): ?>
-              <li class="nav-item"><a href="usuarios/formulario.php" class="nav-link">Criar Usuários</a></li>
-            <?php endif; ?>
-            <li class="nav-item">
-              <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
-            </li>
-            <li class="nav-item">
-              <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
-            </li>
-            <?php if ($currentLevel == 1 || $int_nivel == 3): ?>
-              <li class="nav-item"><a href="../categoria.php" class="nav-link">Categorias</a></li>
-            <?php endif; ?>
-            <?php if ($currentLevel == 1): ?>
-              <li class="nav-item">
-                <form id="formImportFolhaUsuarios" action="processamento/inport_tab_pagamento.php" method="post" enctype="multipart/form-data" style="display:inline;">
-                  <label class="nav-link mb-0" style="cursor:pointer; font-weight: normal;padding: 10px; padding-left: 15px;">
-                    Importar folha de pagamento
-                    <input type="file" name="csvfile" accept=".csv" style="display:none;" onchange="document.getElementById('importOverlay').classList.remove('d-none'); this.form.submit()">
-                  </label>
-                </form>
-              </li>
-            <?php endif; ?>
-          </ul>
-        </div>
-  </div>
-</div>
+  <ul class="nav flex-column">
+    <?php if ($currentLevel == 1): ?>
+      <li class="nav-item">
+        <a href="/cesta/usuarios/formulario.php" class="nav-link">Criar Usuários</a>
+      </li>
+    <?php endif; ?>
 
-<!-- Overlay de progresso de importação (global) -->
-<div id="importOverlay" class="d-none" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:1050;display:flex;align-items:center;justify-content:center;">
-  <div style="background:#fff;padding:20px 28px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.2);text-align:center;">
-    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
-    <div style="margin-top:12px;font-weight:500;">Importando arquivo, por favor aguarde…</div>
-    <small class="text-muted" style="display:block;margin-top:4px;">Não feche esta janela até concluir.</small>
-  </div>
+    <li class="nav-item">
+      <a href="/cesta/beneficiario.php" class="nav-link">Beneficiários</a>
+    </li>
+
+    <li class="nav-item">
+      <a href="/cesta/relatorios/relat.php" class="nav-link">Relatórios</a>
+    </li>
+
+    <?php if ($currentLevel == 1 || $currentLevel == 3): ?>
+      <li class="nav-item">
+        <a href="/cesta/categoria.php" class="nav-link">Categorias</a>
+      </li>
+    <?php endif; ?>
+
+    <?php if ($currentLevel == 1): ?>
+      <li class="nav-item">
+        <form action="/cesta/processamento/inport_tab_pagamento.php" method="post" enctype="multipart/form-data" style="display:inline;">
+          <label class="nav-link mb-0" style="cursor:pointer; font-weight: normal;padding: 10px; padding-left: 15px;">
+            Importar folha de pagamento
+            <input type="file" name="csvfile" accept=".csv" style="display:none;" onchange="this.form.submit()">
+          </label>
+        </form>
+      </li>
+    <?php endif; ?>
+  </ul>
 </div>
+      </div>
+    </div>
 
     <div class="col-md-6" style="padding: 0px; width: calc(100% - 200px);">
       <div class="container center-vertical" style="width: 1100px; padding-top: 10px; padding-bottom: 10px;">

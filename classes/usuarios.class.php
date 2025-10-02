@@ -218,10 +218,27 @@ class Usuarios {
 
 
 
-    public function exibirUsuarios() {
+    public function exibirUsuarios($cod_unidade = null, $int_nivel = null) {
         $pdo = Database::conexao();
-        $sql = "SELECT * FROM beneficiario.usuario order by cod_usuario DESC";
+        
+        // SQL base
+        $sql = "SELECT u.*, un.vch_unidade FROM beneficiario.usuario u 
+                LEFT JOIN beneficiario.unidade un ON u.cod_unidade = un.cod_unidade";
+        
+        // Adiciona filtro por unidade se o usuário for nível 2
+        if ($int_nivel == 2 && $cod_unidade) {
+            $sql .= " WHERE u.cod_unidade = :cod_unidade";
+        }
+        
+        $sql .= " ORDER BY u.cod_usuario DESC";
+        
         $consulta = $pdo->prepare($sql);
+        
+        // Bind do parâmetro se necessário
+        if ($int_nivel == 2 && $cod_unidade) {
+            $consulta->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+        }
+        
         $consulta->execute();
         return $consulta;
     }
@@ -427,8 +444,18 @@ class Usuario
         return $this->codUnidade;
     }
 
-    public function listarPaginada(int $codUnidade = 0, int $page = 1, int $perPage = 6): array
+    public function listarPaginada(int $codUnidade = 0, int $page = 1, int $perPage = 6, int $nivelUsuario = 1): array
     {
+        // Se for nível 2 e não tiver unidade especificada, não deve mostrar nada
+        if ($nivelUsuario == 2 && $codUnidade <= 0) {
+            return [
+                'data' => [],
+                'total' => 0,
+                'page' => $page,
+                'per_page' => $perPage
+            ];
+        }
+        
         // 1) Conta total de registros
         $countSql = "SELECT COUNT(*) FROM beneficiario.usuario"
             . ($codUnidade > 0 ? " WHERE cod_unidade = :un" : "");
@@ -442,14 +469,16 @@ class Usuario
         // 2) Seleciona página com ORDER BY multi‐formato
         $offset = ($page - 1) * $perPage;
         $dataSql = "
-        SELECT cod_usuario
-             , vch_nome
-             , vch_login
-             , cod_unidade
-             , data_cadastro
-             , int_nivel
-          FROM beneficiario.usuario"
-            . ($codUnidade > 0 ? " WHERE cod_unidade = :un" : "")
+        SELECT u.cod_usuario
+             , u.vch_nome
+             , u.vch_login
+             , u.cod_unidade
+             , un.vch_nome as nome_unidade
+             , u.data_cadastro
+             , u.int_nivel
+          FROM beneficiario.usuario u
+          LEFT JOIN beneficiario.unidade un ON u.cod_unidade = un.cod_unidade"
+            . ($codUnidade > 0 ? " WHERE u.cod_unidade = :un" : "")
             . " ORDER BY
             CASE
               WHEN data_cadastro ~ '^[0-3][0-9][-/][0-1][0-9][-/][0-9]{4}$'
