@@ -301,8 +301,8 @@ public function inserirBeneficiario() {
             throw new Exception("Falha ao inserir beneficiário. Erro PDO: " . $errorInfo[2]);
         }
 
-        // Atualizar saldo da unidade (decrementa 1 vaga ao incluir)
-        if (!empty($this->cod_unidade)) {
+        // Atualizar saldo da unidade (decrementa 1 vaga apenas quando situacao=1)
+        if ($this->situacao == 1 && !empty($this->cod_unidade)) {
             $sqlSaldo = "UPDATE beneficiario.saldo_unidade SET saldo = saldo - 1 WHERE cod_unidade = :cod_unidade";
             $stmtSaldo = $this->db->prepare($sqlSaldo);
             $stmtSaldo->bindValue(':cod_unidade', $this->cod_unidade, PDO::PARAM_INT);
@@ -391,6 +391,21 @@ public function excluirBeneficiario()
 {
     $pdo = Database::conexao();
     try {
+        $pdo->beginTransaction();
+
+        // Checa situação atual para evitar ajuste de saldo duplicado
+        $check = $pdo->prepare("SELECT situacao FROM beneficiario.beneficiario WHERE cod_beneficiario = :cod_beneficiario");
+        $check->bindParam(':cod_beneficiario', $this->cod_beneficiario);
+        $check->execute();
+        $row = $check->fetch(PDO::FETCH_ASSOC);
+        $situacaoAtual = $row ? (int)$row['situacao'] : null;
+
+        // Se já está fora da cesta (0), não ajusta saldo novamente
+        if ($situacaoAtual === 0) {
+            $pdo->commit();
+            return true;
+        }
+
         $consulta = $pdo->prepare("
             UPDATE beneficiario.beneficiario 
             SET situacao = :situacao, cod_usuario = :cod_usuario 
@@ -408,9 +423,20 @@ public function excluirBeneficiario()
         ");
         $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
 
-        $consulta_saldo->execute();
-        return $consulta->execute(); // retorna true/false
+        $ok1 = $consulta->execute();
+        $ok2 = $consulta_saldo->execute();
+
+        if (!$ok1 || !$ok2) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $pdo->commit();
+        return true;
     } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         return false;
     }
 }
@@ -420,6 +446,21 @@ public function incluirBeneficiario()
 {
     $pdo = Database::conexao();
     try {
+        $pdo->beginTransaction();
+
+        // Checa situação atual para evitar ajuste de saldo duplicado
+        $check = $pdo->prepare("SELECT situacao FROM beneficiario.beneficiario WHERE cod_beneficiario = :cod_beneficiario");
+        $check->bindParam(':cod_beneficiario', $this->cod_beneficiario);
+        $check->execute();
+        $row = $check->fetch(PDO::FETCH_ASSOC);
+        $situacaoAtual = $row ? (int)$row['situacao'] : null;
+
+        // Se já está incluído (1), não ajusta saldo novamente
+        if ($situacaoAtual === 1) {
+            $pdo->commit();
+            return true;
+        }
+
         // Verificar saldo antes de inserir na cesta
         if (!empty($this->cod_unidade)) {
             $ver = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
@@ -427,9 +468,11 @@ public function incluirBeneficiario()
             $ver->execute();
             $res = $ver->fetch(PDO::FETCH_ASSOC);
             if (!$res || (int)$res['saldo'] <= 0) {
+                $pdo->rollBack();
                 throw new Exception('Não há vagas disponíveis para esta unidade.');
             }
         }
+
         $consulta = $pdo->prepare("
             UPDATE beneficiario.beneficiario 
             SET situacao = :situacao, cod_usuario = :cod_usuario 
@@ -447,9 +490,20 @@ public function incluirBeneficiario()
         ");
         $consulta_saldo->bindParam(':cod_unidade', $this->cod_unidade);
 
-        $consulta_saldo->execute();
-        return $consulta->execute(); // retorna true/false
+        $ok1 = $consulta->execute();
+        $ok2 = $consulta_saldo->execute();
+
+        if (!$ok1 || !$ok2) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $pdo->commit();
+        return true; // retorna true/false
     } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw new Exception('Erro ao atualizar situação: ' . $e->getMessage());
     }
 }
