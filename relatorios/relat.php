@@ -4,6 +4,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 include_once "../classes/beneficiario.class.php";
 include_once "../classes/categoria.class.php";
+include_once "../baseurl.php";
 
 
 
@@ -21,7 +22,12 @@ if ($page < 1) $page = 1;
 $perPage = 20;
 
 $cod_unidade = $_SESSION["cod_unidade"] ?? 0;
-$int_nivel   = $_SESSION["int_level"] ?? 2;
+$int_nivel   = $_SESSION["int_nivel"] ?? 2;
+
+// Quando "Todas as unidades" estiver selecionado, não restringe por unidade
+if ($showAll) {
+  $cod_unidade = 0;
+}
 
 
 
@@ -40,7 +46,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
 
 <head>
   <meta charset="UTF-8">
-  <title>Relatório</title>
+  <title>Relatórios</title>
   <link rel="stylesheet" href="../css/bootstrap.min.css">
   <link rel="stylesheet" href="../css/cesta_custom.css">
   <style>
@@ -190,9 +196,9 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
                   <input type="text" style="width: 100%; left: 0;" class="form-control" placeholder="Pesquisar..." id="searchInput">
                 </div>
                 
-                <a href="?all=1" class="btn btn-primary color">Todas as unidades</a>
+                <a href="<?= abs_url('relatorios/relat.php?all=1') ?>" class="btn btn-primary color">Todas as unidades</a>
                 
-                <a href="?page=1" class="btn btn-primary color">Minha Unidade</a>
+                <a href="<?= abs_url('relatorios/relat.php?page=1') ?>" class="btn btn-primary color">Minha Unidade</a>
                 <button onclick="exportFullCSV()" class="btn btn-success color">Exportar CSV</button>
                 <!-- <button onclick="printFullTable()" class="btn btn-outline-dark">🖨️ Imprimir Lista</button> -->
               </div>
