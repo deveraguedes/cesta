@@ -22,16 +22,10 @@ $cod_usuario = $_SESSION["user_id"];
 
 $page      = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $perPage   = 50;
-$allPages  = isset($_GET['allPages']) && $_GET['allPages'] == 1;
 $searchQ   = isset($_GET['q']) ? (string)$_GET['q'] : '';
 
-if ($allPages) {
-  $page = 1;
-  $perPage = 5000; // Carregar todas as linhas para busca global
-}
-
 $b = new Beneficiario();
-$beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
+$beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage, $searchQ);
 
 // Calculate total and active beneficiaries to determine available spots
 $pdo = Database::conexao();
@@ -407,10 +401,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           <nav class="center-vertical" aria-label="Page navigation" style="padding-top: 0px;">
             <ul class="pagination justify-content-center color">
               <li class="page-item <?= $current == 1 ? 'disabled' : '' ?>">
-                <a class="page-link color" href="?page=1">Primeira</a>
+                <a class="page-link color" href="?page=1<?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>">Primeira</a>
               </li>
               <li class="page-item <?= $current == 1 ? 'disabled' : '' ?>">
-                <a class="page-link color" href="?page=<?= $current - 1 ?>">Anterior</a>
+                <a class="page-link color" href="?page=<?= $current - 1 ?><?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>">Anterior</a>
               </li>
               <?php
               $start = max(1, $current - $range);
@@ -422,7 +416,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 
               for ($p = $start; $p <= $end; $p++): ?>
                 <li class="page-item <?= $p == $current ? 'active' : '' ?>">
-                  <a class="page-link color" href="?page=<?= $p ?>"><?= $p ?></a>
+                  <a class="page-link color" href="?page=<?= $p ?><?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>"><?= $p ?></a>
                 </li>
               <?php endfor;
 
@@ -432,10 +426,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
               ?>
 
               <li class="page-item <?= $current == $totalPages ? 'disabled' : '' ?>">
-                <a class="page-link color" href="?page=<?= $current + 1 ?>">Próxima</a>
+                <a class="page-link color" href="?page=<?= $current + 1 ?><?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>">Próxima</a>
               </li>
               <li class="page-item <?= $current == $totalPages ? 'disabled' : '' ?>">
-                <a class="page-link color" href="?page=<?= $totalPages ?>">Última</a>
+                <a class="page-link color" href="?page=<?= $totalPages ?><?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>">Última</a>
               </li>
             </ul>
           </nav>
@@ -497,7 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
 
   <script>
     $(document).ready(function() {
-      $('#tabela').DataTable({
+      const dt = $('#tabela').DataTable({
         paging: false, // desabilita paginação do DataTables
         searching: true,
         ordering: true,
@@ -506,37 +500,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           url: "vendor/datatables/plug-ins/1.13.6/i18n/pt-BR.json"
         }
       });
-
-      // Se ainda não estamos com todas as páginas carregadas, ao digitar no campo de busca do DataTables
-      // recarregamos a página com allPages=1 e preservamos o termo pesquisado
+      // Busca com debounce: navega com q na querystring para filtrar server-side
       (function() {
-        const isAllPages = <?= $allPages ? 'true' : 'false' ?>;
         const baseUrl = "<?= abs_url('beneficiario.php') ?>";
-        const dt = $('#tabela').DataTable();
-        if (!isAllPages) {
-          const $input = $('#tabela_filter input');
-          let timer = null;
-          let navigated = false;
-          $input.on('input', function() {
-            if (navigated) return; // evita múltiplos redirects
-            const q = $(this).val() || '';
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-              navigated = true;
-              const params = new URLSearchParams(window.location.search);
-              params.set('page', '1');
-              params.set('allPages', '1');
-              params.set('q', q);
-              window.location.href = baseUrl + '?' + params.toString();
-            }, 300);
-          });
-        }
-        // Aplica o termo vindo via query string após carregar a tabela
-        const q = "<?= htmlspecialchars($searchQ, ENT_QUOTES) ?>";
-        if (q) {
-          dt.search(q).draw();
-          // também coloca o valor no input visível
-          $('#tabela_filter input').val(q);
+        const $input = $('#tabela_filter input');
+        let timer = null;
+        $input.on('input', function() {
+          const q = $(this).val() || '';
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', '1');
+            if (q) params.set('q', q); else params.delete('q');
+            window.location.href = baseUrl + '?' + params.toString();
+          }, 250);
+        });
+        // Preenche o input com o valor atual de q, sem aplicar filtro local
+        const qNow = "<?= htmlspecialchars($searchQ, ENT_QUOTES) ?>";
+        if (qNow) {
+          $('#tabela_filter input').val(qNow);
         }
       })();
 

@@ -709,7 +709,7 @@ public function incluirBeneficiario()
         }
     }
 
-    public function exibirBeneficiario(int $cod_unidade, int $int_nivel, int $page = 1, int $perPage = 50): array
+    public function exibirBeneficiario(int $cod_unidade, int $int_nivel, int $page = 1, int $perPage = 50, string $q = ''): array
     {
         try {
             $pdo    = Database::conexao();
@@ -743,6 +743,22 @@ public function incluirBeneficiario()
                 $params[':cod_unidade'] = $cod_unidade;
             }
 
+            // Filtro de busca otimizado (server-side) – suporta entradas de 1 caractere sem travar
+            $bindSearch = [];
+            $q = trim($q ?? '');
+            if ($q !== '') {
+                $select .= " AND (LOWER(b.nome) LIKE :qname OR b.cpf LIKE :qcpf OR CAST(b.nis AS TEXT) LIKE :qnis OR LOWER(ba.vch_bairro) LIKE :qbairro OR LOWER(b.localidade) LIKE :qlocal)";
+                $count  .= " AND (LOWER(b.nome) LIKE :qname OR b.cpf LIKE :qcpf OR CAST(b.nis AS TEXT) LIKE :qnis OR LOWER(ba.vch_bairro) LIKE :qbairro OR LOWER(b.localidade) LIKE :qlocal)";
+                $qLower       = mb_strtolower($q, 'UTF-8');
+                $bindSearch = [
+                    ':qname'   => $qLower . '%',      // prefix para nome evita full scan pesado
+                    ':qcpf'    => '%' . $qLower . '%',
+                    ':qnis'    => '%' . $qLower . '%',
+                    ':qbairro' => '%' . $qLower . '%',
+                    ':qlocal'  => '%' . $qLower . '%',
+                ];
+            }
+
             // Finaliza SELECT com ordenação e paginação
             $select .= " ORDER BY situacao ASC, nome ASC LIMIT :limite OFFSET :inicio";
 
@@ -751,6 +767,9 @@ public function incluirBeneficiario()
             if (isset($params[':cod_unidade'])) {
                 $stmtCount->bindValue(':cod_unidade', $params[':cod_unidade'], PDO::PARAM_INT);
             }
+            foreach ($bindSearch as $key => $val) {
+                $stmtCount->bindValue($key, $val, PDO::PARAM_STR);
+            }
             $stmtCount->execute();
             $total = (int) $stmtCount->fetchColumn();
 
@@ -758,6 +777,9 @@ public function incluirBeneficiario()
             $stmt = $pdo->prepare($select);
             foreach ($params as $key => $val) {
                 $stmt->bindValue($key, $val, PDO::PARAM_INT);
+            }
+            foreach ($bindSearch as $key => $val) {
+                $stmt->bindValue($key, $val, PDO::PARAM_STR);
             }
             $stmt->bindValue(':limite', $perPage, PDO::PARAM_INT);
             $stmt->bindValue(':inicio', $offset, PDO::PARAM_INT);
