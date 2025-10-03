@@ -25,7 +25,13 @@ $perPage   = 50;
 $searchQ   = isset($_GET['q']) ? (string)$_GET['q'] : '';
 
 $b = new Beneficiario();
-$beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage, $searchQ);
+$beneficiarios = $b->exibirBeneficiario(
+  ($int_nivel == 3 ? 0 : $cod_unidade), // For level 3, pass 0 to indicate all units
+  $int_nivel,
+  $page,
+  $perPage,
+  $searchQ
+);
 
 // Calculate total and active beneficiaries to determine available spots
 $pdo = Database::conexao();

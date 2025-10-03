@@ -735,9 +735,9 @@ public function incluirBeneficiario()
                    WHERE (situacao = 0 OR situacao = 1)
                      AND f.cpf IS NULL";
 
-            // Restrição por unidade se não for nível 1
+            // Restrição por unidade se não for nível 1 ou 3
             $params = [];
-            if ($int_nivel != 1 && $cod_unidade > 0) {
+            if ($int_nivel != 1 && $int_nivel != 3 && $cod_unidade > 0) {
                 $select .= " AND b.cod_unidade = :cod_unidade";
                 $count  .= " AND b.cod_unidade = :cod_unidade";
                 $params[':cod_unidade'] = $cod_unidade;

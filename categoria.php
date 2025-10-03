@@ -16,14 +16,17 @@ $categoria = new Categoria();
 
 
 //  Adicionar categoria
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["nome"]) && ($_SESSION['int_level'] ?? 0) == 1) {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["nome"]) && in_array(($_SESSION['int_level'] ?? 0), [1, 3])) {
     $nome = trim($_POST["nome"]);
     if (!empty($nome)) {
         try {
             $categoria->adicionarCategoria($nome);
+            // Log creation
+            error_log("[Categoria] Usuário {$_SESSION['user_id']} criou categoria '{$nome}' em " . date('Y-m-d H:i:s'));
             header("Location: categoria.php");
             exit;
         } catch (Exception $e) {
+            error_log("[Categoria] Erro ao criar categoria: " . $e->getMessage());
             echo "<script>alert('".$e->getMessage()."'); window.location='categoria.php';</script>";
             exit;
         }
@@ -31,14 +34,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["nome"]) && ($_SESSION
 }
 
 //  Excluir categoria
-if (isset($_GET["excluir"]) && ($_SESSION['int_level'] ?? 0) == 1) {
+if (isset($_GET["excluir"]) && in_array(($_SESSION['int_level'] ?? 0), [1, 3])) {
     $id = (int)$_GET["excluir"];
     if ($id > 0) {
         try {
             $categoria->excluirCategoria($id);
+            // Log exclusion
+            error_log("[Categoria] Usuário {$_SESSION['user_id']} excluiu categoria ID {$id} em " . date('Y-m-d H:i:s'));
             header("Location: categoria.php");
             exit;
         } catch (Exception $e) {
+            error_log("[Categoria] Erro ao excluir categoria: " . $e->getMessage());
             echo "<script>alert('".$e->getMessage()."'); window.location='categoria.php';</script>";
             exit;
         }
