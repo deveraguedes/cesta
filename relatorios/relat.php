@@ -203,7 +203,6 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
                 <a href="<?= abs_url('relatorios/relat.php?all=1') ?>" class="btn btn-primary color">Todas as unidades</a>
                 
                 <a href="<?= abs_url('relatorios/relat.php?page=1') ?>" class="btn btn-primary color">Minha Unidade</a>
-                <button onclick="exportFullCSV()" class="btn btn-success color">Exportar CSV</button>
                 <!-- <button onclick="printFullTable()" class="btn btn-outline-dark">🖨️ Imprimir Lista</button> -->
               </div>
             </div>
