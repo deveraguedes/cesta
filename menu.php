@@ -19,6 +19,11 @@
         <!--menu2-->
         <a href="#" class="list-group-item list-group-item-action bg-light" rel="nofollow">Contato</a>
 
+        <!-- Alterar Senha -->
+        <a href="<?= abs_url('usuarios/alterar_senha.php') ?>" class="list-group-item list-group-item-action bg-light" rel="nofollow">
+            <span class="glyphicon glyphicon-lock"></span> Alterar minha senha
+        </a>
+
         <!-- Relatorio -->
         <a href="relatorio.php" class="list-group-item list-group-item-action bg-light" rel="nofollow">Relatório</a>
     </div>
