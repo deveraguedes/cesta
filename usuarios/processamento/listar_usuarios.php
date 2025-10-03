@@ -10,6 +10,9 @@ if (php_sapi_name() !== 'cli') {
 }
 
 session_start();
+// Evitar que avisos/erros em HTML corrompam a resposta JSON
+error_reporting(0);
+ini_set('display_errors', '0');
 header('Content-Type: application/json; charset=UTF-8');
 require_once __DIR__ . '/../../classes/usuarios.class.php';
 
@@ -20,21 +23,30 @@ try {
     }
     
     // Obter nível e unidade do usuário logado
-    $int_nivel = $_SESSION['int_level'] ?? 2;
+    $int_nivel   = $_SESSION['int_level'] ?? 2;
     $cod_unidade = $_SESSION['cod_unidade'] ?? 0;
-    
 
-        
+    // Permitir filtro por unidade via GET. Admin (nivel 1) pode usar 0 para listar todas.
+    $reqUnidade = filter_input(INPUT_GET, 'unidade', FILTER_VALIDATE_INT);
+    if ($reqUnidade !== null) {
+        if ($int_nivel == 1) {
+            $cod_unidade = max(0, (int)$reqUnidade); // 0 = todas as unidades
+        } else {
+            // Níveis não-admin não podem ver "todas"; mantém a unidade da sessão quando 0
+            $cod_unidade = ($reqUnidade > 0) ? (int)$reqUnidade : (int)$cod_unidade;
+        }
+    }
+
     $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;
     $per  = filter_input(INPUT_GET, 'per_page', FILTER_VALIDATE_INT) ?: 6;
 
     // Usar a classe Usuario (nova) se disponível, senão usar Usuarios (antiga)
     if (class_exists('Usuario')) {
         $usuario = new Usuario();
-        $pag = $usuario->listarPaginada($codUn, $page, $per, $int_nivel);
+        $pag = $usuario->listarPaginada((int)$cod_unidade, $page, $per, $int_nivel);
     } else {
         $usuario = new Usuarios();
-        $consulta = $usuario->exibirUsuarios($codUn, $int_nivel);
+        $consulta = $usuario->exibirUsuarios((int)$cod_unidade, $int_nivel);
         $data = $consulta->fetchAll(PDO::FETCH_ASSOC);
         
         // Simular paginação para manter compatibilidade

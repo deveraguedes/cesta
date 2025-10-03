@@ -16,21 +16,25 @@ if (!isset($_SESSION['user_id'])) {
 $firstName = explode(" ", $_SESSION['usuarioNome'])[0];
 $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
 
-$showAll = isset($_GET['all']) && $_GET['all'] == 1;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$showAll  = isset($_GET['all']) && $_GET['all'] == 1;
+$allPages = isset($_GET['allPages']) && $_GET['allPages'] == 1;
+$page     = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
-$perPage = 20;
+$perPage  = 20;
+
+// Quando solicitada busca em todas páginas, carrega tudo em uma só página
+if ($allPages) {
+  $page = 1;
+  $perPage = 5000; // limite alto para trazer todos os registros
+}
 
 $cod_unidade = $_SESSION["cod_unidade"] ?? 0;
-$int_nivel   = $_SESSION["int_nivel"] ?? 2;
+$int_nivel   = $_SESSION["int_level"] ?? 2;
 
 // Quando "Todas as unidades" estiver selecionado, não restringe por unidade
 if ($showAll) {
   $cod_unidade = 0;
 }
-
-
-
 
 function formatarCPF($cpf)
 {
@@ -193,7 +197,7 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
             <div class="col-md-7 text-center" style="padding-top: 10px; left: 0;">
               <div class="btn-group">
                 <div class="input-group" style="margin-bottom: 10px; padding-right: 10px; width: 100%; left: 0;">
-                  <input type="text" style="width: 100%; left: 0;" class="form-control" placeholder="Pesquisar..." id="searchInput">
+                  <input type="text" style="width: 100%; left: 0;" class="form-control" placeholder="Pesquisar..." id="searchInput" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
                 </div>
                 
                 <a href="<?= abs_url('relatorios/relat.php?all=1') ?>" class="btn btn-primary color">Todas as unidades</a>
@@ -283,15 +287,52 @@ $result = $beneficiario->exibirBeneficiario($cod_unidade, $int_nivel, $page, $pe
   </div>
 
   <script>
-    // Simple search across all columns (ignores punctuation)
-    document.getElementById('searchInput').addEventListener('input', function() {
-      const filter = this.value.toLowerCase().replace(/[.\-\s]/g, '');
+    const isAllPages = <?= $allPages ? 'true' : 'false' ?>;
+    const showAllUnits = <?= $showAll ? 'true' : 'false' ?>;
+    const baseUrl = "<?= abs_url('relatorios/relat.php') ?>";
+
+    function applyFilter(str) {
+      const filter = (str || '').toLowerCase().replace(/[.\-\s]/g, '');
       const rows = document.querySelectorAll('#dataTable tbody tr');
       rows.forEach(row => {
         const text = row.innerText.toLowerCase().replace(/[.\-\s]/g, '');
         row.style.display = text.includes(filter) ? '' : 'none';
       });
-    });
+    }
+
+    // Debounced search: when not on allPages yet, navigate ONCE to load all data
+    (function() {
+      const input = document.getElementById('searchInput');
+      if (!input) return;
+      let timer = null;
+      let navigated = false;
+      const handler = function() {
+        const q = this.value || '';
+        if (!isAllPages) {
+          if (navigated) return; // prevent loops
+          navigated = true;
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', '1');
+            if (showAllUnits) params.set('all', '1'); else params.delete('all');
+            params.set('allPages', '1');
+            params.set('q', q);
+            window.location.href = baseUrl + '?' + params.toString();
+          }, 250);
+          return;
+        }
+        applyFilter(q);
+      };
+      input.addEventListener('input', handler);
+    })();
+
+    // Apply initial filter if q exists
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q') || '';
+      if (q) applyFilter(q);
+    })();
 
     // Export full dataset (all pages) to CSV
     function exportFullCSV() {

@@ -198,8 +198,8 @@ class Usuarios {
             $consulta->execute();
             header('Location: ../index.php');
         } catch (PDOException $e) {
-            echo "Ocorreu um erro: $e";
-        }
+            throw new Exception("Ocorreu um erro: $e");
+       }
     }
 
     public function deletarUsuarios($cod_usuario) {
@@ -212,7 +212,7 @@ class Usuarios {
             $consulta->execute();
             header('Location: ../index.php');
         } catch (PDOException $e) {
-            echo "Ocorreu um erro: $e";
+            throw new Exception("Ocorreu um erro: $e");
         }
     }
 
@@ -251,7 +251,7 @@ class Usuarios {
             $consulta->execute();
             return $consulta;
         } catch (PDOException $e) {
-            echo "Ocorreu um erro: $e";
+            throw new Exception("Ocorreu um erro: $e");
         }
     }
 
@@ -270,7 +270,7 @@ class Usuarios {
             $consulta = $pdo->query($sql)->fetchAll();
             return $consulta;
         }catch(PDOException $e){
-            echo "Ocorreu um erro: $e";
+            throw new Exception("Ocorreu um erro: $e");
         }
     }
 
@@ -473,7 +473,7 @@ class Usuario
              , u.vch_nome
              , u.vch_login
              , u.cod_unidade
-             , u.vch_nome as nome_unidade
+             , un.vch_unidade AS nome_unidade
              , u.data_cadastro
              , u.int_nivel
           FROM beneficiario.usuario u

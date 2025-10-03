@@ -6,6 +6,7 @@ include_once "classes/login.class.php";
 include_once "classes/beneficiario.class.php";
 include_once "classes/categoria.class.php";
 include_once "classes/unidade.class.php";
+include_once "baseurl.php";
 
 $l = new LoginUsuario();
 if ($l->isLoggedIn() && $_SESSION['int_level'] > 0) {
@@ -19,8 +20,15 @@ $cod_unidade = $_SESSION["cod_unidade"];
 $int_nivel   = $_SESSION["int_level"];
 $cod_usuario = $_SESSION["user_id"];
 
-$page    = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-$perPage = 50;
+$page      = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$perPage   = 50;
+$allPages  = isset($_GET['allPages']) && $_GET['allPages'] == 1;
+$searchQ   = isset($_GET['q']) ? (string)$_GET['q'] : '';
+
+if ($allPages) {
+  $page = 1;
+  $perPage = 5000; // Carregar todas as linhas para busca global
+}
 
 $b = new Beneficiario();
 $beneficiarios = $b->exibirBeneficiario($cod_unidade, $int_nivel, $page, $perPage);
@@ -498,6 +506,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cod_beneficiario'], $
           url: "vendor/datatables/plug-ins/1.13.6/i18n/pt-BR.json"
         }
       });
+
+      // Se ainda não estamos com todas as páginas carregadas, ao digitar no campo de busca do DataTables
+      // recarregamos a página com allPages=1 e preservamos o termo pesquisado
+      (function() {
+        const isAllPages = <?= $allPages ? 'true' : 'false' ?>;
+        const baseUrl = "<?= abs_url('beneficiario.php') ?>";
+        const dt = $('#tabela').DataTable();
+        if (!isAllPages) {
+          const $input = $('#tabela_filter input');
+          let timer = null;
+          let navigated = false;
+          $input.on('input', function() {
+            if (navigated) return; // evita múltiplos redirects
+            const q = $(this).val() || '';
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              navigated = true;
+              const params = new URLSearchParams(window.location.search);
+              params.set('page', '1');
+              params.set('allPages', '1');
+              params.set('q', q);
+              window.location.href = baseUrl + '?' + params.toString();
+            }, 300);
+          });
+        }
+        // Aplica o termo vindo via query string após carregar a tabela
+        const q = "<?= htmlspecialchars($searchQ, ENT_QUOTES) ?>";
+        if (q) {
+          dt.search(q).draw();
+          // também coloca o valor no input visível
+          $('#tabela_filter input').val(q);
+        }
+      })();
 
       $('#modalCategoria').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);

@@ -516,7 +516,12 @@ $lastName  = explode(" ", $_SESSION['usuarioNome'])[1] ?? '';
                       renderPager(json.total, json.page, json.per_page);
                     } catch (err) {
                       console.error(err);
-                      tbodyEl.innerHTML = '<tr><td colspan="5">Erro ao carregar tabela.</td></tr>';
+                      tbodyEl.innerHTML = `<tr><td colspan="5" style="color: red; font-weight: bold;">Erro ao carregar tabela.<br><span id='detalheErro'></span></td></tr>`;
+                      if (err && err.message) {
+                        document.getElementById('detalheErro').innerText = err.message;
+                      } else {
+                        document.getElementById('detalheErro').innerText = 'Não foi possível obter detalhes do erro.';
+                      }
                     }
                   }
 
