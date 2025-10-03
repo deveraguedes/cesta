@@ -21,7 +21,7 @@ $allPages = isset($_GET['allPages']) && $_GET['allPages'] == 1;
 $page     = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
 $perPage  = 20;
-
+//aaa
 // Quando solicitada busca em todas páginas, carrega tudo em uma só página
 if ($allPages) {
   $page = 1;

@@ -36,18 +36,29 @@ $beneficiarios = $b->exibirBeneficiario(
 // Calculate total and active beneficiaries to determine available spots
 $pdo = Database::conexao();
 
-// Get the total number of vagas from saldo_unidade table
-$stmt = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
-$stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
-$stmt->execute();
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$saldoVagas = $result ? $result['saldo'] : 0;
+if ($int_nivel == 3) {
+  // For level 3, sum saldo and active beneficiaries across all units (including CREAS)
+  $stmt = $pdo->prepare("SELECT SUM(saldo) as saldo_total FROM beneficiario.saldo_unidade");
+  $stmt->execute();
+  $result = $stmt->fetch(PDO::FETCH_ASSOC);
+  $saldoVagas = $result ? $result['saldo_total'] : 0;
 
-// Count active beneficiaries
-$stmt = $pdo->prepare("SELECT COUNT(*) as ativos FROM beneficiario.beneficiario WHERE cod_unidade = :cod_unidade AND situacao = 1");
-$stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
-$stmt->execute();
-$ativosBeneficiarios = $stmt->fetch(PDO::FETCH_ASSOC)['ativos'];
+  $stmt = $pdo->prepare("SELECT COUNT(*) as ativos FROM beneficiario.beneficiario WHERE situacao = 1");
+  $stmt->execute();
+  $ativosBeneficiarios = $stmt->fetch(PDO::FETCH_ASSOC)['ativos'];
+} else {
+  // For other levels, only consider the user's unit
+  $stmt = $pdo->prepare("SELECT saldo FROM beneficiario.saldo_unidade WHERE cod_unidade = :cod_unidade");
+  $stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+  $stmt->execute();
+  $result = $stmt->fetch(PDO::FETCH_ASSOC);
+  $saldoVagas = $result ? $result['saldo'] : 0;
+
+  $stmt = $pdo->prepare("SELECT COUNT(*) as ativos FROM beneficiario.beneficiario WHERE cod_unidade = :cod_unidade AND situacao = 1");
+  $stmt->bindParam(':cod_unidade', $cod_unidade, PDO::PARAM_INT);
+  $stmt->execute();
+  $ativosBeneficiarios = $stmt->fetch(PDO::FETCH_ASSOC)['ativos'];
+}
 
 // Calculate total spots (saldo + active beneficiaries)
 $totalVagas = $saldoVagas + $ativosBeneficiarios;
