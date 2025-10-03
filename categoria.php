@@ -7,7 +7,7 @@ include_once "classes/categoria.class.php";
 $l = new LoginUsuario();
 
 //  Verifica login e nível de acesso (somente nível 1 pode acessar)
-if (!$l->isloggedin() || ($_SESSION['int_level'] ?? 0) != 1) {
+if (!$l->isloggedin() || !in_array(($_SESSION['int_level'] ?? 0), [1, 3])) {
     echo "<script>alert('Acesso negado.'); window.location='beneficiario.php';</script>";
     exit;
 }
